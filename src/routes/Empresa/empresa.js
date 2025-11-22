@@ -1,6 +1,6 @@
 import { prisma } from "../../plugins/database.js";
 
-export default async function empresaRoutes(fastify, options) {
+export default async function empresaRoutes(fastify) {
 
   fastify.post('/empresa', async (request, reply) => {
     const data = request.body;

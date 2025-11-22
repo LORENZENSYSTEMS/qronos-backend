@@ -1,0 +1,53 @@
+import { prisma } from "../../plugins/database.js";
+import ClienteService from '../../services/ClienteService.js';
+
+export default async function clienteRoutes(fastify) {
+  const clienteService = new ClienteService(fastify);
+  // Crear cliente
+  fastify.post('/', async (request, reply) => {
+    const data = request.body;
+    await clienteService.createCliente(data).then((res)=>{
+        reply.code(res.code).send({message:res.message, cliente:res.cliente});
+    }).catch((err)=>{
+        reply.code(401).send({message:"Error al crear el cliente", error: err.message});
+    });
+  });
+
+  // Obtener todos
+  fastify.get('/', async () => {
+      await clienteService.getAllClientes().then(res=>{
+        reply.code(res.code).send({clientes:res.clientes});
+    }).catch(err=>{
+        reply.code(res.code).send({message:"Error al obtener los clientes", error: err.message});
+    });
+  });
+
+  // Obtener 1 por ID
+  fastify.get('/:id', async (request) => {
+   await clienteService.getClienteById(Number(request.params.id)).then(res=>{
+        reply.code(res.code).send({cliente:res.cliente});
+    }).catch(err=>{
+        reply.code(res.code).send({message:"Error al obtener el cliente", error: err.message});
+    }); 
+  });
+
+  // Actualizar
+  fastify.put('/:id', async (request) => {
+    const data = request.body;
+    await clienteService.updateCliente(Number(request.params.id), data).then(res=>{
+        reply.code(res.code).send({message:res.message, cliente:res.cliente});
+    }).catch(err=>{
+        reply.code(401).send({message:"Error al actualizar el cliente", error: err.message});
+    });
+  });
+
+  // Eliminar
+  fastify.delete('/:id', async (request) => {
+    await clienteService.deleteCliente(Number(request.params.id)).then(res=>{
+        reply.code(res.code).send({message:res.message});
+    }).catch(err=>{
+        reply.code(401).send({message:"Error al eliminar el cliente", error: err.message});
+    });
+  });
+
+}
