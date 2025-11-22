@@ -1,42 +1,59 @@
-import { prisma } from "../../plugins/database.js";
+import empresaService from "./services/empresaService.js"; // Asegúrate de que la ruta de importación sea correcta
 
 export default async function empresaRoutes(fastify) {
 
+  // Crear Empresa
   fastify.post('/empresa', async (request, reply) => {
-    const data = request.body;
-
-    const nuevaEmpresa = await prisma.empresa.create({
-      data: {
-        nombreCompleto: data.nombreCompleto,
-        correo: data.correo,
-        contrasena: data.contrasena
-      }
-    });
-
-    return reply.send(nuevaEmpresa);
+    const result = await empresaService.createEmpresa(request.body);
+    
+    if (result.code === 201) {
+      return reply.code(201).send(result.empresa);
+    } else {
+      return reply.code(result.code).send(result);
+    }
   });
 
-  fastify.get('/empresa', async () => {
-    return prisma.empresa.findMany();
+  // Obtener todas
+  fastify.get('/empresa', async (request, reply) => {
+    const result = await empresaService.getAllEmpresas();
+
+    if (result.code === 200) {
+      return reply.code(200).send(result.empresas);
+    } else {
+      return reply.code(result.code).send(result);
+    }
   });
 
-  fastify.get('/empresa/:id', async (request) => {
-    return prisma.empresa.findUnique({
-      where: { empresa_id: Number(request.params.id) }
-    });
+  // Obtener por ID
+  fastify.get('/empresa/:id', async (request, reply) => {
+    const result = await empresaService.getEmpresaById(request.params.id);
+
+    if (result.code === 200) {
+      return reply.code(200).send(result.empresa);
+    } else {
+      return reply.code(result.code).send(result);
+    }
   });
 
-  fastify.put('/empresa/:id', async (request) => {
-    return prisma.empresa.update({
-      where: { empresa_id: Number(request.params.id) },
-      data: request.body
-    });
+  // Actualizar
+  fastify.put('/empresa/:id', async (request, reply) => {
+    const result = await empresaService.updateEmpresa(request.params.id, request.body);
+
+    if (result.code === 200) {
+      return reply.code(200).send(result.empresa);
+    } else {
+      return reply.code(result.code).send(result);
+    }
   });
 
-  fastify.delete('/empresa/:id', async (request) => {
-    return prisma.empresa.delete({
-      where: { empresa_id: Number(request.params.id) }
-    });
-  });
+  // Eliminar
+  fastify.delete('/empresa/:id', async (request, reply) => {
+    const result = await empresaService.deleteEmpresa(request.params.id);
 
+    if (result.code === 200) {
+      return reply.code(200).send(result); // Devuelve mensaje de éxito y objeto eliminado
+    } else {
+      return reply.code(result.code).send(result);
+    }
+  });
 }
