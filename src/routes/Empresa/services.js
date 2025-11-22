@@ -1,6 +1,6 @@
 import { prisma } from "../../plugins/database.js";
 
-class EmpresaService {
+export class EmpresaService {
 
   // Crear Empresa
   async createEmpresa(data) {
@@ -77,5 +77,3 @@ class EmpresaService {
     }
   }
 }
-
-export default new EmpresaService();

@@ -1,9 +1,10 @@
-import empresaService from "./services/empresaService.js"; // Asegúrate de que la ruta de importación sea correcta
+import { EmpresaService } from "./services.js"; // Asegúrate de que la ruta de importación sea correcta
 
 export default async function empresaRoutes(fastify) {
-
+  const empresaService = new EmpresaService(fastify);
+  
   // Crear Empresa
-  fastify.post('/empresa', async (request, reply) => {
+  fastify.post('/', async (request, reply) => {
     const result = await empresaService.createEmpresa(request.body);
     
     if (result.code === 201) {
@@ -14,7 +15,7 @@ export default async function empresaRoutes(fastify) {
   });
 
   // Obtener todas
-  fastify.get('/empresa', async (request, reply) => {
+  fastify.get('/', async (request, reply) => {
     const result = await empresaService.getAllEmpresas();
 
     if (result.code === 200) {
@@ -25,7 +26,7 @@ export default async function empresaRoutes(fastify) {
   });
 
   // Obtener por ID
-  fastify.get('/empresa/:id', async (request, reply) => {
+  fastify.get('/:id', async (request, reply) => {
     const result = await empresaService.getEmpresaById(request.params.id);
 
     if (result.code === 200) {
@@ -36,7 +37,7 @@ export default async function empresaRoutes(fastify) {
   });
 
   // Actualizar
-  fastify.put('/empresa/:id', async (request, reply) => {
+  fastify.put('/:id', async (request, reply) => {
     const result = await empresaService.updateEmpresa(request.params.id, request.body);
 
     if (result.code === 200) {
@@ -47,7 +48,7 @@ export default async function empresaRoutes(fastify) {
   });
 
   // Eliminar
-  fastify.delete('/empresa/:id', async (request, reply) => {
+  fastify.delete('/:id', async (request, reply) => {
     const result = await empresaService.deleteEmpresa(request.params.id);
 
     if (result.code === 200) {

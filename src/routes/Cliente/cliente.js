@@ -1,8 +1,8 @@
-import { prisma } from "../../plugins/database.js";
-import ClienteService from '../../services/ClienteService.js';
+import {ClienteService} from './services.js';
 
 export default async function clienteRoutes(fastify) {
   const clienteService = new ClienteService(fastify);
+
   // Crear cliente
   fastify.post('/', async (request, reply) => {
     const data = request.body;
@@ -14,7 +14,7 @@ export default async function clienteRoutes(fastify) {
   });
 
   // Obtener todos
-  fastify.get('/', async () => {
+  fastify.get('/', async (resquest,reply) => {
       await clienteService.getAllClientes().then(res=>{
         reply.code(res.code).send({clientes:res.clientes});
     }).catch(err=>{
@@ -23,7 +23,7 @@ export default async function clienteRoutes(fastify) {
   });
 
   // Obtener 1 por ID
-  fastify.get('/:id', async (request) => {
+  fastify.get('/:id', async (request,reply) => {
    await clienteService.getClienteById(Number(request.params.id)).then(res=>{
         reply.code(res.code).send({cliente:res.cliente});
     }).catch(err=>{
@@ -32,7 +32,7 @@ export default async function clienteRoutes(fastify) {
   });
 
   // Actualizar
-  fastify.put('/:id', async (request) => {
+  fastify.put('/:id', async (request,reply) => {
     const data = request.body;
     await clienteService.updateCliente(Number(request.params.id), data).then(res=>{
         reply.code(res.code).send({message:res.message, cliente:res.cliente});
@@ -42,7 +42,7 @@ export default async function clienteRoutes(fastify) {
   });
 
   // Eliminar
-  fastify.delete('/:id', async (request) => {
+  fastify.delete('/:id', async (request,reply) => {
     await clienteService.deleteCliente(Number(request.params.id)).then(res=>{
         reply.code(res.code).send({message:res.message});
     }).catch(err=>{

@@ -1,60 +1,47 @@
-import metricaService from "./services/metricaService.js";
+import { MetricaService } from "./services.js";
 
 export default async function metricaRoutes(fastify, options) {
-
+  const metricaService = new MetricaService();
   // Crear métrica
-  fastify.post('/metrica', async (request, reply) => {
+  fastify.post('/', async (request, reply) => {
     const result = await metricaService.createMetrica(request.body);
-    
-    if (result.code === 201) {
-      return reply.code(201).send(result.metrica);
-    } else {
-      return reply.code(result.code).send(result);
-    }
+    return reply.code(result.code).send(result.code === 201 ? result.metrica : result);
   });
 
-  // Obtener todas
-  fastify.get('/metrica', async (request, reply) => {
+  // Obtener TODAS las métricas (sin filtro)
+  fastify.get('/', async (request, reply) => {
     const result = await metricaService.getAllMetricas();
-
-    if (result.code === 200) {
-      return reply.code(200).send(result.metricas);
-    } else {
-      return reply.code(result.code).send(result);
-    }
+    return reply.code(result.code).send(result.code === 200 ? result.metricas : result);
   });
 
-  // Obtener por ID
-  fastify.get('/metrica/:id', async (request, reply) => {
+  // --- NUEVA RUTA: Obtener métricas de un CLIENTE específico ---
+  fastify.get('/cliente/:clienteId', async (request, reply) => {
+    const result = await metricaService.getMetricasByCliente(request.params.clienteId);
+    return reply.code(result.code).send(result.code === 200 ? result.metricas : result);
+  });
+
+  // --- NUEVA RUTA: Obtener métricas de una EMPRESA específica ---
+  fastify.get('/empresa/:empresaId', async (request, reply) => {
+    const result = await metricaService.getMetricasByEmpresa(request.params.empresaId);
+    return reply.code(result.code).send(result.code === 200 ? result.metricas : result);
+  });
+
+  // Obtener una métrica específica por su ID (metrica_id)
+  fastify.get('/:id', async (request, reply) => {
     const result = await metricaService.getMetricaById(request.params.id);
-
-    if (result.code === 200) {
-      return reply.code(200).send(result.metrica);
-    } else {
-      return reply.code(result.code).send(result);
-    }
+    return reply.code(result.code).send(result.code === 200 ? result.metrica : result);
   });
 
-  // Actualizar
-  fastify.put('/metrica/:id', async (request, reply) => {
+  // Actualizar métrica
+  fastify.put('/:id', async (request, reply) => {
     const result = await metricaService.updateMetrica(request.params.id, request.body);
-
-    if (result.code === 200) {
-      return reply.code(200).send(result.metrica);
-    } else {
-      return reply.code(result.code).send(result);
-    }
+    return reply.code(result.code).send(result.code === 200 ? result.metrica : result);
   });
 
-  // Eliminar
-  fastify.delete('/metrica/:id', async (request, reply) => {
+  // Eliminar métrica
+  fastify.delete('/:id', async (request, reply) => {
     const result = await metricaService.deleteMetrica(request.params.id);
-
-    if (result.code === 200) {
-      return reply.code(200).send(result); // Retorna mensaje y objeto eliminado
-    } else {
-      return reply.code(result.code).send(result);
-    }
+    return reply.code(result.code).send(result);
   });
 
 }
