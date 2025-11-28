@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import clienteRoutes from './src/routes/Cliente/cliente.js';
 import EmpresaRouter from './src/routes/Empresa/empresa.js';
 import metricaRoutes from './src/routes/metricasCliente/metrica.js';
+import qrRoutes from './src/routes/Qr/qr.router.js';
 
 const app = Fastify({ logger: true });
 
@@ -10,6 +11,7 @@ const app = Fastify({ logger: true });
 app.register(clienteRoutes, { prefix: '/api/cliente' }); 
 app.register(EmpresaRouter, { prefix: '/api/empresa' });
 app.register(metricaRoutes, { prefix: '/api/metricas' });
+app.register(qrRoutes, { prefix: '/api/qr' });
 
 
 const start = async () => {
