@@ -42,7 +42,11 @@ export class ClienteService {
 
     async getAllClientes() {
         try {
-            const clientes = await prisma.cliente.findMany();
+            const clientes = await prisma.cliente.findMany({
+                omit: {
+                    contrasena: true
+                }
+            });
             return {code:200, clientes:clientes};
         }catch (err) {
             return {code:500, message:"Error al obtener los clientes", error: err.message};
@@ -53,19 +57,20 @@ export class ClienteService {
         try {
             const cliente = await prisma.cliente.findUnique({
                 where: { cliente_id: id },
-                include:{
-                    empresa: {
-                        select:{
-                            empresa_id:true,
-                            nombreEmpresa:true
-                        }
-                    }
+                omit: {
+                    contrasena: true
+                }
+            });
+            const empresa = await prisma.empresa.findFirst({
+                where: { correo: cliente.correo },
+                omit: {
+                    contrasena: true
                 }
             });
             if (!cliente) {
                 return {code:404, message:"Cliente no encontrado"};
             }
-            return {code:200, cliente:cliente};
+            return {code:200, data:{empresa:empresa,cliente:cliente}};
         } catch (err) {
             return {code:500, message:"Error al obtener el cliente", error: err.message};
         }
