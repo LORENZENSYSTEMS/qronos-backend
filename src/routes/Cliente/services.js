@@ -3,6 +3,20 @@ import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js';
 export class ClienteService {
     constructor(Fastify) {}
 
+    async login(email, password) {
+        const cliente =  await prisma.cliente.findFirst({
+            where: { correo: email }
+        });
+        if (!cliente) {
+            return {code:404, message:"Cliente no encontrado"};
+        }
+        const isPasswordValid = await verifyPassword(password, cliente.contrasena);
+        if (!isPasswordValid) {
+            return {code:401, message:"Contraseña incorrecta"};
+        }
+        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto};
+    }
+
     async createCliente(clientData) {
         const password = await hashPassword(clientData.contrasena);
         const data = await prisma.cliente.findFirst({
@@ -38,7 +52,15 @@ export class ClienteService {
     async getClienteById(id) {
         try {
             const cliente = await prisma.cliente.findUnique({
-                where: { cliente_id: id }
+                where: { cliente_id: id },
+                include:{
+                    empresa: {
+                        select:{
+                            empresa_id:true,
+                            nombreEmpresa:true
+                        }
+                    }
+                }
             });
             if (!cliente) {
                 return {code:404, message:"Cliente no encontrado"};
