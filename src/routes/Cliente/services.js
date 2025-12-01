@@ -7,6 +7,16 @@ export class ClienteService {
         const cliente =  await prisma.cliente.findFirst({
             where: { correo: email }
         });
+
+        const empresa = await prisma.empresa.findFirst({
+            where:{
+                correo:cliente.correo
+            },
+            omit:{
+                contrasena:true
+            }
+        })
+
         if (!cliente) {
             return {code:404, message:"Cliente no encontrado"};
         }
@@ -14,7 +24,10 @@ export class ClienteService {
         if (!isPasswordValid) {
             return {code:401, message:"Contraseña incorrecta"};
         }
-        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto};
+        if(!empresa){
+            return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto};
+        }
+        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,empresa:empresa.nombreCompleto,token_empresa:empresa.empresa_id};
     }
 
     async createCliente(clientData) {

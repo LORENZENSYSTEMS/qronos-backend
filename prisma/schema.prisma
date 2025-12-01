@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,7 +8,7 @@ datasource db {
 
 
 model Cliente {
-  cliente_id      Int       @id @default(autoincrement())
+  cliente_id      Int       @unique @id @default(autoincrement())
   nombreCompleto  String
   correo          String    @unique
   contrasena      String
@@ -17,7 +17,7 @@ model Cliente {
 }
 
 model Empresa {
-  empresa_id      Int       @id @default(autoincrement())
+  empresa_id      Int      @unique @id @default(autoincrement())
   nombreCompleto  String
   correo          String    @unique
   contrasena      String
@@ -26,12 +26,14 @@ model Empresa {
 }
 
 model Metrica {
-  metrica_id    Int     @id @default(autoincrement())
-  cliente_id    Int?
-  empresa_id    Int?
-  vecesScan     Int
-  puntos        Int?
+  metrica_id      Int @id @default(autoincrement()) 
+  cliente_id      Int 
+  empresa_id      Int 
+  vecesScan       Int
+  puntos          Int?
 
-  cliente       Cliente? @relation(fields: [cliente_id], references: [cliente_id])
-  empresa       Empresa? @relation(fields: [empresa_id], references: [empresa_id])
+  cliente          Cliente @relation(fields: [cliente_id], references: [cliente_id])
+  empresa          Empresa @relation(fields: [empresa_id], references: [empresa_id])
+
+  @@unique([cliente_id, empresa_id]) 
 }

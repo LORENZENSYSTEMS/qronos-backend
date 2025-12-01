@@ -14,8 +14,7 @@ export class QrServices {
         }
         
         const payload = {
-            empresa_id: Number(data.empresa_id),
-            puntos: Number(data.puntos),
+            client_id: Number(data.client_id),
             nonce: crypto.randomUUID(), 
             iat: Date.now() 
         };
@@ -28,13 +27,13 @@ export class QrServices {
         return `${encodedPayload}.${hmac}`;
     }
 
-    async generateQrData({ empresa_id, puntos }) { 
-        if (!empresa_id || !puntos) {
-            return { code: 400, message: "empresa_id y puntos son obligatorios" };
+    async generateQrData({ client_id}) { 
+        if (!client_id) {
+            return { code: 400, message: "el client_id es obligatorio" };
         }
 
         try {
-            const token = this._signData({ empresa_id, puntos });
+            const token = this._signData({ client_id });
             
             return { 
                 code: 201, 

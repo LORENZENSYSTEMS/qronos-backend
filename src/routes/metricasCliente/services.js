@@ -29,53 +29,74 @@ export class MetricaService {
     }
 
     // 2. Registra el escaneo del QR, validando su seguridad.
-    async registerScan({ cliente_id, qr_token }) {
+    async registerScan({ empresa_id, puntos, qr_token }) {
         
         if (!QR_SECRET_KEY) {
             return { code: 500, message: "Error de configuración: La clave secreta (TOKEN) no está definida." };
         }
 
         try {
+            // --- 1. VALIDACIÓN DEL TOKEN QR ---
             const parts = qr_token.split('.');
             if (parts.length !== 2) {
                 return { code: 400, message: "Formato de token QR inválido. Debe contener firma." };
             }
 
             const [encodedPayload, receivedSignature] = parts;
-            
-            // 1. Verificar la Firma HMAC (Integridad)
             const payloadString = Buffer.from(encodedPayload, 'base64').toString('utf8');
             
+            // Verificación de la Firma HMAC
             const expectedSignature = crypto.createHmac(HASH_ALGORITHM, QR_SECRET_KEY)
                                             .update(payloadString)
                                             .digest('hex');
 
             if (expectedSignature !== receivedSignature) {
-                // El token fue manipulado: la firma no coincide.
                 return { code: 401, message: "Firma de QR no válida. El token ha sido alterado." };
             }
 
-            // 2. Decodificar y Validar Datos
+            // Decodificación y Extracción de Datos
             const payload = JSON.parse(payloadString);
+            console.log(payload)
+            const cliente_id = payload.client_id;
             
-            // 2a. Validar Expiración
+            // Validar Expiración
             if (Date.now() - payload.iat > EXPIRATION_MS) {
                 return { code: 401, message: "Código QR expirado. Solicite uno nuevo." };
             }
-
-            // 2b. Validar Unicidad del Nonce (Lógica anti-fraude)
             
-            // 3. Crear Métrica (La validación de seguridad ha sido exitosa)
-            const metricaData = {
-                cliente_id: cliente_id,
-                empresa_id: payload.empresa_id,
-                vecesScan: 1, 
-                puntos: payload.puntos
+
+            // --- 2. OPERACIÓN ATÓMICA CREAR O ACTUALIZAR (UPSERT) ---
+            const metricaResult = await prisma.metrica.upsert({
+                where: {
+                    cliente_id_empresa_id:{
+                        cliente_id: cliente_id, 
+                        empresa_id: empresa_id 
+                    }
+                        
+                },
+                update: {
+                    vecesScan: { increment: 1 }, 
+                    puntos: { increment: puntos }, 
+                },
+                create: {
+                    cliente_id: cliente_id,
+                    empresa_id: empresa_id,
+                    vecesScan: 1,
+                    puntos: puntos, 
+                },
+            });
+
+            // 3. RESPUESTA EXITOSA
+            const action = metricaResult.vecesScan === 1 ? "Métrica creada" : "Métrica actualizada";
+            
+            return { 
+                code: metricaResult.vecesScan === 1 ? 201 : 200, 
+                message: action, 
+                metrica: metricaResult 
             };
             
-            const result = await this.createMetrica(metricaData); 
-            return result;
         } catch (err) {
+            console.error(err);
             return { code: 500, message: "Error interno al procesar el escaneo", error: err.message };
         }
     }
