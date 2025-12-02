@@ -1,11 +1,14 @@
 import {prisma} from '../../plugins/database.js';
 import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js';
 export class ClienteService {
-    constructor(Fastify) {}
+    fastify;
+    constructor(Fastify) {
+        this.fastify = Fastify
+    }
 
     async login(email, password) {
         const cliente =  await prisma.cliente.findFirst({
-            where: { correo: email }
+            where: { correo: email },
         });
 
         const empresa = await prisma.empresa.findFirst({
@@ -25,9 +28,28 @@ export class ClienteService {
             return {code:401, message:"Contraseña incorrecta"};
         }
         if(!empresa){
-            return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto};
+            const payload = {
+                token:cliente.cliente_id,
+                cliente:cliente.nombreCompleto,
+                rol:cliente.rol
+            }
+
+            const jwt = this.fastify.jwt.sign(payload , {expiresIn:'1d'})
+
+            return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,rol:cliente.rol,jwt:jwt};
         }
-        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,empresa:empresa.nombreCompleto,token_empresa:empresa.empresa_id};
+
+        const payload = {
+               token:cliente.cliente_id,
+               cliente:cliente.nombreCompleto,
+               empresa:empresa.nombreCompleto,
+               token_empresa:empresa.empresa_id,
+               rol:cliente.rol,
+            }
+
+        const jwt = this.fastify.jwt.sign(payload, {expiresIn:'1d'})
+
+        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,empresa:empresa.nombreCompleto,token_empresa:empresa.empresa_id,rol:cliente.rol,jwt:jwt};
     }
 
     async createCliente(clientData) {

@@ -8,9 +8,28 @@ export default async function clienteRoutes(fastify) {
     const { email, password } = request.body;
     await clienteService.login(email, password).then((res)=>{
         if(!res.empresa){
-          reply.code(res.code).send({message:res.message, token:res.token,cliente:res.cliente,code:res.code});
+          reply.code(res.code).send(
+            {
+              message:res.message,
+              token:res.token,
+              cliente:res.cliente,
+              code:res.code,
+              rol:res.rol,
+              jwt:res.jwt
+            });
         }
-        reply.code(res.code).send({message:res.message, token:res.token,cliente:res.cliente,code:res.code,empresa:res.empresa,token_empresa:res.token_empresa});
+        reply.code(res.code).send(
+          {
+            message:res.message,
+            token:res.token,
+            cliente:res.cliente,
+            code:res.code,
+            empresa:res.empresa,
+            token_empresa:res.token_empresa,
+            rol:res.rol,
+            jwt:res.jwt
+
+          });
     }).catch((err)=>{
         reply.code(401).send({message:"Error en el inicio de sesion", error: err.message});
     });

@@ -6,9 +6,14 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Rol {
+  Admin
+  Regular
+}
 
 model Cliente {
   cliente_id      Int       @unique @id @default(autoincrement())
+  rol             Rol @default(Regular) 
   nombreCompleto  String
   correo          String    @unique
   contrasena      String
