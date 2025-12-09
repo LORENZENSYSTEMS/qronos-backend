@@ -1,12 +1,21 @@
 import {prisma} from '../../plugins/database.js';
 import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js';
 export class ClienteService {
-    constructor(Fastify) {}
+    fastify;
+    constructor(Fastify) {
+        this.fastify = Fastify
+    }
 
+<<<<<<< HEAD
     async login(email) { // 💡 Ya no necesitamos 'password' aquí, solo el 'email'
         // 1. Buscar el cliente por correo para obtener el ID de tu DB y el nombre
         const cliente = await prisma.cliente.findFirst({
             where: { correo: email }
+=======
+    async login(email, password) {
+        const cliente =  await prisma.cliente.findFirst({
+            where: { correo: email },
+>>>>>>> c715978d0377d317e54958e6036d2ba00df4577d
         });
 
         if (!cliente) {
@@ -27,11 +36,36 @@ export class ClienteService {
         
         // 3. Respuesta de login exitoso
         if(!empresa){
+<<<<<<< HEAD
             // Usamos el cliente_id como token (como lo hacías antes)
             return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id, cliente:cliente.nombreCompleto};
         }
         
         return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id, cliente:cliente.nombreCompleto, empresa:empresa.nombreCompleto, token_empresa:empresa.empresa_id};
+=======
+            const payload = {
+                token:cliente.cliente_id,
+                cliente:cliente.nombreCompleto,
+                rol:cliente.rol
+            }
+
+            const jwt = this.fastify.jwt.sign(payload , {expiresIn:'1d'})
+
+            return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,rol:cliente.rol,jwt:jwt};
+        }
+
+        const payload = {
+               token:cliente.cliente_id,
+               cliente:cliente.nombreCompleto,
+               empresa:empresa.nombreCompleto,
+               token_empresa:empresa.empresa_id,
+               rol:cliente.rol,
+            }
+
+        const jwt = this.fastify.jwt.sign(payload, {expiresIn:'1d'})
+
+        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,empresa:empresa.nombreCompleto,token_empresa:empresa.empresa_id,rol:cliente.rol,jwt:jwt};
+>>>>>>> c715978d0377d317e54958e6036d2ba00df4577d
     }
 
     async createCliente(clientData) {

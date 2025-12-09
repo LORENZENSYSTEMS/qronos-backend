@@ -15,7 +15,11 @@ const registerScanSchema = {
 
 export default async function metricaRoutes(fastify, options) {
   const metricaService = new MetricaService();
-  fastify.post('/register-scan', { schema: registerScanSchema }, async (request, reply) => {
+  fastify.post('/register-scan', 
+    { 
+      schema: registerScanSchema,
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
     // 1. Desestructuración de datos de la solicitud
     const { empresa_id, puntos, qr_token } = request.body;
     
@@ -61,7 +65,10 @@ export default async function metricaRoutes(fastify, options) {
   });
 
   // Obtener TODAS las métricas (sin filtro)
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/',
+    {
+      preHandler: [fastify.authenticate]
+    }, async (request, reply) => {
     const result = await metricaService.getAllMetricas();
     return reply.code(result.code).send(result.code === 200 ? result.metricas : result);
   });

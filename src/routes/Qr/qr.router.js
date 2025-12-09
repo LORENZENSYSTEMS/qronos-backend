@@ -26,7 +26,12 @@ const generateQrSchema = {
 export default async function metricaRoutes(fastify, options) {
     const qrService = new QrServices();
     // Generar datos para Código QR
-    fastify.post('/generate', { schema: generateQrSchema }, async (request, reply) => {
+    fastify.post('/generate', 
+        { 
+            schema: generateQrSchema ,
+            preHandler: [fastify.authenticate]
+        },
+        async (request, reply) => {
         const { client_id } = request.body;
 
         const result = await qrService.generateQrData({ client_id });
