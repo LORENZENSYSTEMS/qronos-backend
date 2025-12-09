@@ -1,24 +1,83 @@
 import { prisma } from "../../plugins/database.js";
+import { firebaseAdminAuth } from "../../plugins/firebaseAdmin.js"; // 👈 Importa tu configuración Admin
 
 export class EmpresaService {
 
-  // Crear Empresa
+  async login(email) {
+        // 1. Buscar la empresa por correo para obtener el ID de tu DB y el nombre
+        const empresa = await prisma.empresa.findFirst({
+            where: { correo: email }
+            // Nota: Aquí podrías usar findUnique si 'correo' es @unique
+        });
+
+        if (!empresa) {
+            // Este error será capturado por el frontend
+            return { code: 404, message: "Perfil de empresa no encontrado en la base de datos." };
+        }
+
+        // 2. Respuesta de login exitoso
+        return {
+            code: 200,
+            message: "Inicio de sesión de empresa exitoso",
+            empresa: empresa.nombreCompleto,
+            token_empresa: empresa.empresa_id,
+            // Aquí puedes añadir el auth_uid si el frontend lo necesita
+            auth_uid: empresa.auth_uid 
+        };
+    }
+
+  // Crear Empresa (Lógica Backend completa)
   async createEmpresa(data) {
     try {
+      // 1. CREAR USUARIO EN FIREBASE (Desde el Backend)
+      // Esto genera el UID automáticamente
+      const firebaseUser = await firebaseAdminAuth.createUser({
+        email: data.correo,
+        password: data.contrasena,
+        displayName: data.nombreCompleto,
+        emailVerified: false, // Nace sin verificar
+        disabled: false
+      });
+
+      const authUidGenerado = firebaseUser.uid; // ✅ Ya tenemos el UID real
+
+      // 2. GENERAR ENLACE DE VERIFICACIÓN
+      // El Admin SDK no envía el correo, pero genera el link.
+      // Para pruebas en Postman, devolveremos este link en la respuesta.
+      // En producción, aquí usarías Nodemailer para enviar este link por email.
+      const verificationLink = await firebaseAdminAuth.generateEmailVerificationLink(data.correo);
+
+      // 3. GUARDAR EN LA BASE DE DATOS (PRISMA)
       const nuevaEmpresa = await prisma.empresa.create({
         data: {
           nombreCompleto: data.nombreCompleto,
           correo: data.correo,
-          contrasena: data.contrasena
+          contrasena: data.contrasena, // Puedes guardarla o no, Firebase ya la tiene
+          auth_uid: authUidGenerado // 👈 Guardamos el UID real de Firebase
         }
       });
-      return { code: 201, message: "Empresa creada con éxito", empresa: nuevaEmpresa };
+
+      return { 
+        code: 201, 
+        message: "Empresa creada con éxito.", 
+        empresa: nuevaEmpresa,
+        // 👇 IMPORTANTE: En Postman verás este link. Copialo y pégalo en el navegador para verificar.
+        verificationUrl: verificationLink 
+      };
+
     } catch (err) {
+      console.error("Error Backend:", err);
+
+      // Manejo de errores específicos de Firebase Admin
+      if (err.code === 'auth/email-already-exists') {
+        return { code: 409, message: "El correo ya está registrado en Firebase.", error: err.message };
+      }
+
       return { code: 500, message: "Error al crear la empresa", error: err.message };
     }
   }
 
-  // Obtener todas
+  // Obtener todas (Sin cambios)
   async getAllEmpresas() {
     try {
       const empresas = await prisma.empresa.findMany();
@@ -28,24 +87,20 @@ export class EmpresaService {
     }
   }
 
-  // Obtener por ID
+  // Obtener por ID (Sin cambios)
   async getEmpresaById(id) {
     try {
       const empresa = await prisma.empresa.findUnique({
         where: { empresa_id: Number(id) }
       });
-
-      if (!empresa) {
-        return { code: 404, message: "Empresa no encontrada" };
-      }
-
+      if (!empresa) return { code: 404, message: "Empresa no encontrada" };
       return { code: 200, empresa: empresa };
     } catch (err) {
       return { code: 500, message: "Error al obtener la empresa", error: err.message };
     }
   }
 
-  // Actualizar
+  // Actualizar (Sin cambios)
   async updateEmpresa(id, data) {
     try {
       const empresaActualizada = await prisma.empresa.update({
@@ -54,26 +109,42 @@ export class EmpresaService {
       });
       return { code: 200, message: "Empresa actualizada", empresa: empresaActualizada };
     } catch (err) {
-      // Prisma lanza error si el ID no existe al intentar actualizar
-      if (err.code === 'P2025') {
-          return { code: 404, message: "Empresa no encontrada para actualizar", error: err.message };
-      }
-      return { code: 500, message: "Error al actualizar la empresa", error: err.message };
+      if (err.code === 'P2025') return { code: 404, message: "Empresa no encontrada", error: err.message };
+      return { code: 500, message: "Error al actualizar", error: err.message };
     }
   }
 
-  // Eliminar
+  // Eliminar (Ojo: También deberíamos eliminar de Firebase)
   async deleteEmpresa(id) {
     try {
+      // Primero obtenemos el auth_uid para borrarlo de Firebase también
+      const empresa = await prisma.empresa.findUnique({ where: { empresa_id: Number(id) } });
+      
+      if (empresa && empresa.auth_uid) {
+         try {
+             await firebaseAdminAuth.deleteUser(empresa.auth_uid);
+         } catch(e) { console.log("Usuario no encontrado en Firebase o ya eliminado"); }
+      }
+
       const empresaEliminada = await prisma.empresa.delete({
         where: { empresa_id: Number(id) }
       });
       return { code: 200, message: "Empresa eliminada", empresa: empresaEliminada };
     } catch (err) {
-      if (err.code === 'P2025') {
-        return { code: 404, message: "Empresa no encontrada para eliminar", error: err.message };
+      if (err.code === 'P2025') return { code: 404, message: "Empresa no encontrada", error: err.message };
+      return { code: 500, message: "Error al eliminar", error: err.message };
     }
-      return { code: 500, message: "Error al eliminar la empresa", error: err.message };
+  }
+
+  // NUEVO MÉTODO PARA PRUEBAS
+  async verifyEmpresaManually(auth_uid) {
+    try {
+        await firebaseAdminAuth.updateUser(auth_uid, {
+            emailVerified: true
+        });
+        return { code: 200, message: "Usuario verificado manualmente en Firebase." };
+    } catch (err) {
+        return { code: 500, message: "Error al verificar usuario en Firebase Admin", error: err.message };
     }
   }
 }
