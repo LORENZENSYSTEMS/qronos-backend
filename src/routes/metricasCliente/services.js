@@ -105,7 +105,15 @@ export class MetricaService {
     // Obtener todas (General)
     async getAllMetricas() {
         try {
-            const metricas = await prisma.metrica.findMany();
+            const metricas = await prisma.metrica.findMany({
+                include:{
+                    empresa:{
+                        select:{
+                            nombreCompleto:true
+                        }
+                    }
+                }
+            });
             return { code: 200, metricas: metricas };
         } catch (err) {
             return { code: 500, message: "Error al obtener las métricas", error: err.message };

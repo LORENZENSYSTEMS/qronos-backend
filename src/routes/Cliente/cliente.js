@@ -3,6 +3,7 @@ import {ClienteService} from './services.js';
 export default async function clienteRoutes(fastify) {
   const clienteService = new ClienteService(fastify);
 
+<<<<<<< HEAD
 
     // Inicio de sesion 
 fastify.post('/login', async (request, reply) => {
@@ -39,6 +40,37 @@ fastify.post('/login', async (request, reply) => {
         } else {
             reply.code(res.code).send({ message: res.message, cliente: res.cliente });
         }
+=======
+  //Inicio de sesion 
+  fastify.post('/login', async (request, reply) => {
+    const { email, password } = request.body;
+    await clienteService.login(email, password).then((res)=>{
+        if(!res.empresa){
+          reply.code(res.code).send(
+            {
+              message:res.message,
+              token:res.token,
+              cliente:res.cliente,
+              code:res.code,
+              rol:res.rol,
+              jwt:res.jwt
+            });
+        }
+        reply.code(res.code).send(
+          {
+            message:res.message,
+            token:res.token,
+            cliente:res.cliente,
+            code:res.code,
+            empresa:res.empresa,
+            token_empresa:res.token_empresa,
+            rol:res.rol,
+            jwt:res.jwt
+
+          });
+    }).catch((err)=>{
+        reply.code(401).send({message:"Error en el inicio de sesion", error: err.message});
+>>>>>>> c715978d0377d317e54958e6036d2ba00df4577d
     });
 
   // Obtener todos
