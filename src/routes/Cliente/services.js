@@ -32,7 +32,6 @@ export class ClienteService {
 
         // 3. Preparar Payload del JWT
         let payload = { email: email };
-        let rol = 'Guest'; // Rol por defecto
 
         if (cliente) {
             payload.cliente_id = cliente.cliente_id;
@@ -42,8 +41,7 @@ export class ClienteService {
 
         if (empresa) {
             payload.empresa_id = empresa.empresa_id;
-            payload.rol = 'Empresa'; // Si es empresa, se le da este rol, o el rol más alto si tiene ambos
-            rol = 'Empresa';
+            payload.rol = 'Regular';
         }
 
         // 4. Generar el JWT
@@ -64,7 +62,7 @@ export class ClienteService {
     }
 
     async createCliente(clientData) {
-        const password = await hashPassword(clientData.contrasena);
+        // const password = await hashPassword(clientData.contrasena);
         
         // Verificar si existe por correo
         const data = await prisma.cliente.findFirst({
@@ -74,8 +72,8 @@ export class ClienteService {
             
         if(data){
             // Si existe, verificamos si la contraseña coincide (lógica existente)
-            const verify = await verifyPassword(clientData.contrasena, data.contrasena);
-            if(verify){
+            // const verify = await verifyPassword(clientData.contrasena, data.contrasena);
+            if(data){
                 return {code:409, message:"El cliente ya existe"}
             }
         }
@@ -85,9 +83,9 @@ export class ClienteService {
             data: {
                 nombreCompleto: clientData.nombreCompleto,
                 correo: clientData.correo,
-                // Usamos auth_uid si viene, o generamos uno si no (opcional, depende de tu flujo)
                 auth_uid: clientData.auth_uid, 
                 contrasena: password,
+                rol:clientData.rol || 'Cliente',
             }
         });
         return {code:201, message:"Cliente creado exitosamente", cliente:newCliente};
