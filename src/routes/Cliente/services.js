@@ -1,111 +1,106 @@
 import {prisma} from '../../plugins/database.js';
-import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js';
+// Ya no necesitamos verifyPassword ni hashPassword aquí si solo buscamos
+// import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js'; 
+
+// ...
 export class ClienteService {
     fastify;
     constructor(Fastify) {
         this.fastify = Fastify
     }
 
-<<<<<<< HEAD
-    async login(email) { // 💡 Ya no necesitamos 'password' aquí, solo el 'email'
-        // 1. Buscar el cliente por correo para obtener el ID de tu DB y el nombre
+    async login(email) { // ¡Ya no se necesita la contraseña aquí!
+        // 1. Buscar Cliente
         const cliente = await prisma.cliente.findFirst({
-            where: { correo: email }
-=======
-    async login(email, password) {
-        const cliente =  await prisma.cliente.findFirst({
             where: { correo: email },
->>>>>>> c715978d0377d317e54958e6036d2ba00df4577d
         });
 
-        if (!cliente) {
-            // Este error se produce si Firebase Auth tiene el usuario, 
-            // pero tu DB local no. Esto es lo que causa el error en el frontend.
-            return {code:404, message:"Perfil de cliente no encontrado en la base de datos."};
-        }
-
-        // 2. Buscar la empresa (si existe)
+        // 2. Buscar Empresa (basada en el mismo correo)
         const empresa = await prisma.empresa.findFirst({
-            where:{
-                correo:cliente.correo
-            },
-            // Como eliminaste 'contrasena' del esquema, el 'omit' no es necesario
-            // pero lo dejamos por si acaso:
-            // omit:{ contrasena:true } 
-        })
-        
-        // 3. Respuesta de login exitoso
-        if(!empresa){
-<<<<<<< HEAD
-            // Usamos el cliente_id como token (como lo hacías antes)
-            return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id, cliente:cliente.nombreCompleto};
-        }
-        
-        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id, cliente:cliente.nombreCompleto, empresa:empresa.nombreCompleto, token_empresa:empresa.empresa_id};
-=======
-            const payload = {
-                token:cliente.cliente_id,
-                cliente:cliente.nombreCompleto,
-                rol:cliente.rol
-            }
+            where: { correo: email },
+            omit: { contrasena: true } // Evitar exponer la contraseña
+        });
 
-            const jwt = this.fastify.jwt.sign(payload , {expiresIn:'1d'})
+        if (!cliente && !empresa) {
+            // Ningún perfil encontrado en DB (aunque Firebase pasó)
+            return { 
+                code: 404, 
+                message: "Perfil no encontrado en la base de datos local (Cliente o Empresa).",
+                jwt: null 
+            };
+    }
 
-            return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,rol:cliente.rol,jwt:jwt};
+        // 3. Preparar Payload del JWT
+        let payload = { email: email };
+        let rol = 'Guest'; // Rol por defecto
+
+        if (cliente) {
+            payload.cliente_id = cliente.cliente_id;
+            payload.rol = cliente.rol; 
+            rol = cliente.rol;
         }
 
-        const payload = {
-               token:cliente.cliente_id,
-               cliente:cliente.nombreCompleto,
-               empresa:empresa.nombreCompleto,
-               token_empresa:empresa.empresa_id,
-               rol:cliente.rol,
-            }
+        if (empresa) {
+            payload.empresa_id = empresa.empresa_id;
+            payload.rol = 'Empresa'; // Si es empresa, se le da este rol, o el rol más alto si tiene ambos
+            rol = 'Empresa';
+        }
 
-        const jwt = this.fastify.jwt.sign(payload, {expiresIn:'1d'})
+        // 4. Generar el JWT
+        const jwt = this.fastify.jwt.sign(payload, { expiresIn: '1d' });
 
-        return {code:200, message:"Inicio de sesion exitoso", token:cliente.cliente_id,cliente:cliente.nombreCompleto,empresa:empresa.nombreCompleto,token_empresa:empresa.empresa_id,rol:cliente.rol,jwt:jwt};
->>>>>>> c715978d0377d317e54958e6036d2ba00df4577d
+        // 5. Devolver Respuesta Completa
+        return {
+            code: 200, 
+            message: "Inicio de sesión exitoso", 
+            jwt: jwt,
+            rol: rol,
+            // Devolvemos los IDs y Nombres para SecureStore en el frontend
+            token: cliente ? cliente.cliente_id : null, 
+            cliente: cliente ? cliente.nombreCompleto : null,
+            token_empresa: empresa ? empresa.empresa_id : null,
+            empresa: empresa ? empresa.nombreCompleto : null,
+        };
     }
 
     async createCliente(clientData) {
+        const password = await hashPassword(clientData.contrasena);
         
-        // 1. Verificar si el cliente ya existe por correo.
-        const existingCliente = await prisma.cliente.findFirst({
-            where: { correo: clientData.correo }
+        // Verificar si existe por correo
+        const data = await prisma.cliente.findFirst({
+            where: {
+                correo: clientData.correo}
+            })
+            
+        if(data){
+            // Si existe, verificamos si la contraseña coincide (lógica existente)
+            const verify = await verifyPassword(clientData.contrasena, data.contrasena);
+            if(verify){
+                return {code:409, message:"El cliente ya existe"}
+            }
+        }
+        
+        // Crear nuevo cliente
+        const newCliente = await prisma.cliente.create({
+            data: {
+                nombreCompleto: clientData.nombreCompleto,
+                correo: clientData.correo,
+                // Usamos auth_uid si viene, o generamos uno si no (opcional, depende de tu flujo)
+                auth_uid: clientData.auth_uid, 
+                contrasena: password,
+            }
         });
-        
-        if(existingCliente){
-            return {code:409, message:"El cliente ya existe en la base de datos"};
-        }
-        
-        // 2. Crear el nuevo cliente.
-        try {
-            // 🔥 CAMBIO CRÍTICO: Usar clientData.contrasena
-            // Si el frontend envía 'password', debe ser renombrado en el frontend.
-            const newCliente = await prisma.cliente.create({
-                data: {
-                    nombreCompleto: clientData.nombreCompleto,
-                    correo: clientData.correo,
-                    auth_uid: clientData.auth_uid,
-                    // Aseguramos que la contraseña se guarde, asumiendo que el frontend la envía.
-                    contrasena: clientData.contrasena 
-                }
-            });
-            return {code:201, message:"Cliente creado exitosamente", cliente:newCliente};
-        } catch (error) {
-            console.error("Error FATAL de Prisma al crear cliente:", error);
-            return {
-                code: 500, 
-                message: "Error interno al guardar el cliente.", 
-                internalError: error.message 
-            };
-        }
+        return {code:201, message:"Cliente creado exitosamente", cliente:newCliente};
+
     }
 
     async getAllClientes() {
         try {
-            const clientes = await prisma.cliente.findMany(); // Ya no necesita 'omit: {contrasena: true}'
+            const clientes = await prisma.cliente.findMany({
+                omit: {
+                    contrasena: true
+                }
+            });
             return {code:200, clientes:clientes};
         }catch (err) {
             return {code:500, message:"Error al obtener los clientes", error: err.message};
@@ -116,13 +111,21 @@ export class ClienteService {
         try {
             const cliente = await prisma.cliente.findUnique({
                 where: { cliente_id: id },
+                omit: {
+                    contrasena: true
+                }
             });
-            const empresa = await prisma.empresa.findFirst({
-                where: { correo: cliente.correo },
-            });
-            if (!cliente) {
+            if (!cliente) { 
                 return {code:404, message:"Cliente no encontrado"};
             }
+            
+            const empresa = await prisma.empresa.findFirst({
+                where: { correo: cliente.correo },
+                omit: {
+                    contrasena: true
+                }
+            });
+            
             return {code:200, data:{empresa:empresa,cliente:cliente}};
         } catch (err) {
             return {code:500, message:"Error al obtener el cliente", error: err.message};
@@ -131,6 +134,10 @@ export class ClienteService {
 
     async updateCliente(id, updateData) {
         try {
+            if (updateData.contrasena) {
+                updateData.contrasena = await hashPassword(updateData.contrasena);
+            }
+            
             const updatedCliente = await prisma.cliente.update({
                 where: { cliente_id: id },
                 data: updateData

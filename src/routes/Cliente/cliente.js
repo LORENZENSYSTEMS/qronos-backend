@@ -1,34 +1,40 @@
+// archivo: cliente.js
+
 import {ClienteService} from './services.js';
 
 export default async function clienteRoutes(fastify) {
-  const clienteService = new ClienteService(fastify);
+    const clienteService = new ClienteService(fastify);
 
-<<<<<<< HEAD
 
     // Inicio de sesion 
-fastify.post('/login', async (request, reply) => {
-    // 💡 CAMBIO CRUCIAL: AHORA ESPERAMOS TANTO email COMO password
-    const { email, password } = request.body; 
-    
-    // 💡 El servicio solo necesita el email para buscar el perfil. 
-    // La variable 'password' aquí se recibe y se ignora, ya que la autenticación la hizo Firebase.
-    const res = await clienteService.login(email); 
-    
-    // 💡 Ajuste de respuesta para manejar los códigos de estado del servicio
-    if (res.code >= 400) {
-        reply.code(res.code).send({ message: res.message });
-    } else {
-        reply.code(res.code).send({
-            message: res.message, 
-            token: res.token, 
-            cliente: res.cliente, 
-            code: res.code,
-            empresa: res.empresa, 
-            token_empresa: res.token_empresa
-        });
-    }
-});
+    fastify.post('/login', async (request, reply) => {
+        // 💡 CAMBIO CRUCIAL: Aseguramos recibir email Y password
+        const { email } = request.body; 
+        
+        // 💡 CAMBIO CRUCIAL: Pasamos email Y password al servicio
+        const res = await clienteService.login(email); 
+        
+        // 💡 Ajuste de respuesta para manejar los códigos de estado del servicio
+        if (res.code >= 400) {
+            // Si hay error (401, 404, etc.), enviamos solo el mensaje de error.
+            reply.code(res.code).send({ message: res.message });
+        } else {
+            // Si es 200 (éxito), enviamos TODO el objeto que contiene el JWT.
+            reply.code(res.code).send({
+                message: res.message, 
+                token: res.token, 
+                cliente: res.cliente, 
+                code: res.code,
+                empresa: res.empresa, 
+                token_empresa: res.token_empresa,
+                jwt: res.jwt, // 👈 ASEGURAMOS DEVOLVER EL JWT
+                rol: res.rol, // Aseguramos devolver el rol
+            });
+        }
+    });
 
+    // ... (El resto de las rutas GET, POST, PUT, DELETE permanece igual)
+    
     // Crear cliente
     fastify.post('/', async (request, reply) => {
         const data = request.body;
@@ -40,74 +46,42 @@ fastify.post('/login', async (request, reply) => {
         } else {
             reply.code(res.code).send({ message: res.message, cliente: res.cliente });
         }
-=======
-  //Inicio de sesion 
-  fastify.post('/login', async (request, reply) => {
-    const { email, password } = request.body;
-    await clienteService.login(email, password).then((res)=>{
-        if(!res.empresa){
-          reply.code(res.code).send(
-            {
-              message:res.message,
-              token:res.token,
-              cliente:res.cliente,
-              code:res.code,
-              rol:res.rol,
-              jwt:res.jwt
-            });
-        }
-        reply.code(res.code).send(
-          {
-            message:res.message,
-            token:res.token,
-            cliente:res.cliente,
-            code:res.code,
-            empresa:res.empresa,
-            token_empresa:res.token_empresa,
-            rol:res.rol,
-            jwt:res.jwt
-
-          });
-    }).catch((err)=>{
-        reply.code(401).send({message:"Error en el inicio de sesion", error: err.message});
->>>>>>> c715978d0377d317e54958e6036d2ba00df4577d
     });
 
-  // Obtener todos
-  fastify.get('/', async (resquest,reply) => {
-      await clienteService.getAllClientes().then(res=>{
-        reply.code(res.code).send({clientes:res.clientes});
-    }).catch(err=>{
-        reply.code(res.code).send({message:"Error al obtener los clientes", error: err.message});
+    // Obtener todos
+    fastify.get('/', async (resquest,reply) => {
+        await clienteService.getAllClientes().then(res=>{
+            reply.code(res.code).send({clientes:res.clientes});
+        }).catch(err=>{
+            reply.code(500).send({message:"Error al obtener los clientes", error: err.message});
+        });
     });
-  });
 
-  // Obtener 1 por ID
-  fastify.get('/:id', async (request,reply) => {
-   await clienteService.getClienteById(Number(request.params.id)).then(res=>{
-        reply.code(res.code).send({cliente:res.data,});
-    }).catch(err=>{
-        reply.code(res.code).send({message:"Error al obtener el cliente", error: err.message});
-    }); 
-  });
-
-  // Actualizar
-  fastify.put('/:id', async (request,reply) => {
-    const data = request.body;
-    await clienteService.updateCliente(Number(request.params.id), data).then(res=>{
-        reply.code(res.code).send({message:res.message, cliente:res.cliente});
-    }).catch(err=>{
-        reply.code(401).send({message:"Error al actualizar el cliente", error: err.message});
+    // Obtener 1 por ID
+    fastify.get('/:id', async (request,reply) => {
+        await clienteService.getClienteById(Number(request.params.id)).then(res=>{
+            reply.code(res.code).send({cliente:res.data,});
+        }).catch(err=>{
+            reply.code(500).send({message:"Error al obtener el cliente", error: err.message});
+        }); 
     });
-  });
 
-  // Eliminar
-  fastify.delete('/:id', async (request,reply) => {
-    await clienteService.deleteCliente(Number(request.params.id)).then(res=>{
-        reply.code(res.code).send({message:res.message});
-    }).catch(err=>{
-        reply.code(401).send({message:"Error al eliminar el cliente", error: err.message});
+    // Actualizar
+    fastify.put('/:id', async (request,reply) => {
+        const data = request.body;
+        await clienteService.updateCliente(Number(request.params.id), data).then(res=>{
+            reply.code(res.code).send({message:res.message, cliente:res.cliente});
+        }).catch(err=>{
+            reply.code(401).send({message:"Error al actualizar el cliente", error: err.message});
+        });
     });
-  });
 
+    // Eliminar
+    fastify.delete('/:id', async (request,reply) => {
+        await clienteService.deleteCliente(Number(request.params.id)).then(res=>{
+            reply.code(res.code).send({message:res.message});
+        }).catch(err=>{
+            reply.code(401).send({message:"Error al eliminar el cliente", error: err.message});
+        });
+    });
 }

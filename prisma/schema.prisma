@@ -1,3 +1,5 @@
+// archivo: schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,25 +8,46 @@ datasource db {
   provider = "postgresql"
 }
 
+// 1. Enum para el Rol del Cliente
+enum Rol {
+  Admin
+  Regular
+}
 
+// 2. Modelo Cliente (Incluye Rol y Auth UID de Firebase)
 model Cliente {
-  cliente_id      Int       @unique @id @default(autoincrement())
+  cliente_id      Int     @unique @id @default(autoincrement())
+  auth_uid        String? @unique // ⬅️ ID ÚNICO de Firebase (se permite nulo por compatibilidad o transición)
+  rol             Rol     @default(Regular) // ⬅️ Traído del esquema viejo
   nombreCompleto  String
-  correo          String   @unique
-  contrasena      String 
-  // ❌ Se eliminaron: contrasena, isVerified, verificationToken, tokenExpiresAt
-  
+  correo          String  @unique
+  contrasena      String // ⬅️ Mantenido para validación local/legacy y creación de JWT
+
   metricas        Metrica[]
 }
 
-// 3. Empresa
+// 3. Modelo Empresa (Incluye Auth UID de Firebase)
 model Empresa {
-  empresa_id      Int      @unique @id @default(autoincrement())
-  auth_uid        String   @unique // ⬅️ ID ÚNICO DEL SISTEMA DE AUTENTICACIÓN (EJ: UID de Firebase)
+  empresa_id      Int     @unique @id @default(autoincrement())
+  auth_uid        String  @unique // ⬅️ ID ÚNICO de Firebase (Es clave aquí)
   nombreCompleto  String
-  correo          String   @unique
-  contrasena      String
-  // ❌ Se eliminaron: contrasena, isVerified, verificationToken, tokenExpiresAt
-  
+  correo          String  @unique
+  contrasena      String // ⬅️ Mantenido para validación local/legacy y creación de JWT
+
   metricas        Metrica[]
+}
+
+// 4. Modelo Metrica (Relaciones N:M entre Cliente y Empresa)
+model Metrica {
+  metrica_id      Int     @id @default(autoincrement()) 
+  cliente_id      Int 
+  empresa_id      Int 
+  vecesScan       Int
+  puntos          Int?
+
+  cliente         Cliente @relation(fields: [cliente_id], references: [cliente_id])
+  empresa         Empresa @relation(fields: [empresa_id], references: [empresa_id])
+
+  // Asegura que un Cliente solo tenga una fila de métricas por Empresa
+  @@unique([cliente_id, empresa_id]) 
 }
