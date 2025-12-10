@@ -8,18 +8,13 @@ export default async function clienteRoutes(fastify) {
 
     // Inicio de sesion 
     fastify.post('/login', async (request, reply) => {
-        // 💡 CAMBIO CRUCIAL: Aseguramos recibir email Y password
         const { email } = request.body; 
         
-        // 💡 CAMBIO CRUCIAL: Pasamos email Y password al servicio
         const res = await clienteService.login(email); 
         
-        // 💡 Ajuste de respuesta para manejar los códigos de estado del servicio
         if (res.code >= 400) {
-            // Si hay error (401, 404, etc.), enviamos solo el mensaje de error.
             reply.code(res.code).send({ message: res.message });
         } else {
-            // Si es 200 (éxito), enviamos TODO el objeto que contiene el JWT.
             reply.code(res.code).send({
                 message: res.message, 
                 token: res.token, 
@@ -27,20 +22,18 @@ export default async function clienteRoutes(fastify) {
                 code: res.code,
                 empresa: res.empresa, 
                 token_empresa: res.token_empresa,
-                jwt: res.jwt, // 👈 ASEGURAMOS DEVOLVER EL JWT
-                rol: res.rol, // Aseguramos devolver el rol
+                jwt: res.jwt, 
+                rol: res.rol, 
             });
         }
     });
 
-    // ... (El resto de las rutas GET, POST, PUT, DELETE permanece igual)
     
     // Crear cliente
     fastify.post('/', async (request, reply) => {
         const data = request.body;
         const res = await clienteService.createCliente(data);
 
-        // 💡 Ajuste de respuesta para manejar los códigos de estado del servicio
         if (res.code >= 400) {
             reply.code(res.code).send({ message: res.message, error: res.internalError });
         } else {
