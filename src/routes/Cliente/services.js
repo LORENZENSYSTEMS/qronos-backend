@@ -1,6 +1,6 @@
 import {prisma} from '../../plugins/database.js';
 // Ya no necesitamos verifyPassword ni hashPassword aquí si solo buscamos
-// import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js'; 
+import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js'; 
 
 // ...
 export class ClienteService {
