@@ -64,12 +64,13 @@ export default async function metricaRoutes(fastify, options) {
     return reply.code(result.code).send(result.code === 201 ? result.metrica : result);
   });
 
-  // Obtener TODAS las métricas (sin filtro)
   fastify.get('/',
     {
-      preHandler: [fastify.authenticate]
+      // preHandler: [fastify.authenticate]  <-- COMENTA O BORRA ESTA LÍNEA
     }, async (request, reply) => {
     const result = await metricaService.getAllMetricas();
+    // Nota: El servicio devuelve { code: 200, metricas: [...] }
+    // Tu código actual en metrica.js envía el array directo:
     return reply.code(result.code).send(result.code === 200 ? result.metricas : result);
   });
 

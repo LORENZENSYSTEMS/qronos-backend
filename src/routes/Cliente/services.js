@@ -32,6 +32,7 @@ export class ClienteService {
 
         // 3. Preparar Payload del JWT
         let payload = { email: email };
+        let rol = 'Guest'; // Rol por defecto
 
         if (cliente) {
             payload.cliente_id = cliente.cliente_id;
@@ -41,7 +42,8 @@ export class ClienteService {
 
         if (empresa) {
             payload.empresa_id = empresa.empresa_id;
-            payload.rol = 'Regular';
+            payload.rol = 'Empresa';
+            rol = 'Empresa';
         }
 
         // 4. Generar el JWT
