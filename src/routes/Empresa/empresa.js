@@ -44,7 +44,10 @@ export default async function empresaRoutes(fastify) {
   });
 
   // Obtener todas
-  fastify.get('/', async (request, reply) => {
+  fastify.get('/', 
+    {
+      preHandler: [fastify.authenticate]
+    },async (request, reply) => {
     const result = await empresaService.getAllEmpresas();
 
     if (result.code === 200) {
