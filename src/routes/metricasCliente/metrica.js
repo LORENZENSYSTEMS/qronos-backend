@@ -66,7 +66,7 @@ export default async function metricaRoutes(fastify, options) {
 
   fastify.get('/',
     {
-      // preHandler: [fastify.authenticate]  <-- COMENTA O BORRA ESTA LÍNEA
+      preHandler: [fastify.authenticate]
     }, async (request, reply) => {
     const result = await metricaService.getAllMetricas();
     // Nota: El servicio devuelve { code: 200, metricas: [...] }
