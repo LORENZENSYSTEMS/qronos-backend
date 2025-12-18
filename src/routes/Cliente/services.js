@@ -64,34 +64,29 @@ export class ClienteService {
     }
 
     async createCliente(clientData) {
-        // const password = await hashPassword(clientData.contrasena);
+    // ✅ CORRECCIÓN 1: Descomentar esta línea
+    const password = await hashPassword(clientData.contrasena);
+    
+    // Verificar si existe por correo...
+    const data = await prisma.cliente.findFirst({
+        where: { correo: clientData.correo }
+    });
         
-        // Verificar si existe por correo
-        const data = await prisma.cliente.findFirst({
-            where: {
-                correo: clientData.correo}
-            })
-            
-        if(data){
-            // Si existe, verificamos si la contraseña coincide (lógica existente)
-            // const verify = await verifyPassword(clientData.contrasena, data.contrasena);
-            if(data){
-                return {code:409, message:"El cliente ya existe"}
-            }
+    if(data){
+        return {code:409, message:"El cliente ya existe"};
+    }
+    
+    // Crear nuevo cliente
+    const newCliente = await prisma.cliente.create({
+        data: {
+            nombreCompleto: clientData.nombreCompleto,
+            correo: clientData.correo,
+            auth_uid: clientData.auth_uid, 
+            contrasena: password, // Ahora 'password' sí tiene un valor (el hash)
+            rol: clientData.rol || 'Regular',
         }
-        
-        // Crear nuevo cliente
-        const newCliente = await prisma.cliente.create({
-            data: {
-                nombreCompleto: clientData.nombreCompleto,
-                correo: clientData.correo,
-                auth_uid: clientData.auth_uid, 
-                contrasena: password,
-                rol:clientData.rol || 'Cliente',
-            }
-        });
-        return {code:201, message:"Cliente creado exitosamente", cliente:newCliente};
-
+    });
+    return {code:201, message:"Cliente creado exitosamente", cliente:newCliente};
     }
 
     async getAllClientes() {
