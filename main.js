@@ -15,6 +15,8 @@ app.decorate("authenticate", async (request, reply) => {
     reply.send(err);
   }
 });
+
+app.get('/', async (request, reply) => { return { status: "running", uptime: process.uptime() } });
 app.register(notificationRoutes, { prefix: '/api/notifications' });
 app.register(clienteRoutes, { prefix: '/api/cliente' }); 
 app.register(EmpresaRouter, { prefix: '/api/empresa' });
