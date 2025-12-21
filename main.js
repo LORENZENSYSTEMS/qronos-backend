@@ -4,7 +4,7 @@ import clienteRoutes from './src/routes/Cliente/cliente.js';
 import EmpresaRouter from './src/routes/Empresa/empresa.js';
 import metricaRoutes from './src/routes/metricasCliente/metrica.js';
 import qrRoutes from './src/routes/Qr/qr.router.js';
-
+import notificationRoutes from './src/routes/notifications/notifications.js';
 const app = Fastify({ logger: true });
 
 app.register(fastifyJwt, { secret: process.env.TOKEN});
@@ -15,7 +15,7 @@ app.decorate("authenticate", async (request, reply) => {
     reply.send(err);
   }
 });
-
+app.register(notificationRoutes, { prefix: '/api/notifications' });
 app.register(clienteRoutes, { prefix: '/api/cliente' }); 
 app.register(EmpresaRouter, { prefix: '/api/empresa' });
 app.register(metricaRoutes, { prefix: '/api/metricas' });

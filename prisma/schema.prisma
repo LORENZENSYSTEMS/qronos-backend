@@ -17,23 +17,22 @@ enum Rol {
 // 2. Modelo Cliente (Incluye Rol y Auth UID de Firebase)
 model Cliente {
   cliente_id      Int     @unique @id @default(autoincrement())
-  auth_uid        String? @unique // ⬅️ ID ÚNICO de Firebase (se permite nulo por compatibilidad o transición)
-  rol             Rol     @default(Regular) // ⬅️ Traído del esquema viejo
+  auth_uid        String? @unique
+  rol             Rol     @default(Regular)
   nombreCompleto  String
   correo          String  @unique
-  contrasena      String // ⬅️ Mantenido para validación local/legacy y creación de JWT
-
+  contrasena      String
+  pushToken       String? 
   metricas        Metrica[]
 }
 
-// 3. Modelo Empresa (Incluye Auth UID de Firebase)
 model Empresa {
   empresa_id      Int     @unique @id @default(autoincrement())
-  auth_uid        String  @unique // ⬅️ ID ÚNICO de Firebase (Es clave aquí)
+  auth_uid        String  @unique
   nombreCompleto  String
   correo          String  @unique
-  contrasena      String // ⬅️ Mantenido para validación local/legacy y creación de JWT
-
+  contrasena      String
+  pushToken       String? 
   metricas        Metrica[]
 }
 

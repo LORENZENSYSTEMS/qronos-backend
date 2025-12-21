@@ -1,67 +1,104 @@
 import {prisma} from '../../plugins/database.js';
-// Ya no necesitamos verifyPassword ni hashPassword aquí si solo buscamos
-import {hashPassword,verifyPassword} from '../../plugins/bcrypt.js'; 
+import {hashPassword} from '../../plugins/bcrypt.js'; 
 
-// ...
 export class ClienteService {
     fastify;
     constructor(Fastify) {
         this.fastify = Fastify
     }
 
-    async login(email) { // ¡Ya no se necesita la contraseña aquí!
-        // 1. Buscar Cliente
-        const cliente = await prisma.cliente.findFirst({
-            where: { correo: email },
-        });
+    async login(email, pushToken) {
+    // 1. Buscar Cliente
+    const cliente = await prisma.cliente.findFirst({
+        where: { correo: email },
+    });
 
-        // 2. Buscar Empresa (basada en el mismo correo)
-        const empresa = await prisma.empresa.findFirst({
-            where: { correo: email },
-            omit: { contrasena: true } // Evitar exponer la contraseña
-        });
+    // 2. Buscar Empresa
+    const empresa = await prisma.empresa.findFirst({
+        where: { correo: email },
+        omit: { contrasena: true }
+    });
 
-        if (!cliente && !empresa) {
-            // Ningún perfil encontrado en DB (aunque Firebase pasó)
-            return { 
-                code: 404, 
-                message: "Perfil no encontrado en la base de datos local (Cliente o Empresa).",
-                jwt: null 
-            };
-    }
-
-        // 3. Preparar Payload del JWT
-        let payload = { email: email };
-        let rol = 'Guest'; // Rol por defecto
-
-        if (cliente) {
-            payload.cliente_id = cliente.cliente_id;
-            payload.rol = cliente.rol; 
-            rol = cliente.rol;
-        }
-
-        if (empresa) {
-            payload.empresa_id = empresa.empresa_id;
-            payload.rol = 'Empresa';
-            rol = 'Empresa';
-        }
-
-        // 4. Generar el JWT
-        const jwt = this.fastify.jwt.sign(payload, { expiresIn: '1d' });
-
-        // 5. Devolver Respuesta Completa
-        return {
-            code: 200, 
-            message: "Inicio de sesión exitoso", 
-            jwt: jwt,
-            rol: rol,
-            // Devolvemos los IDs y Nombres para SecureStore en el frontend
-            token: cliente ? cliente.cliente_id : null, 
-            cliente: cliente ? cliente.nombreCompleto : null,
-            token_empresa: empresa ? empresa.empresa_id : null,
-            empresa: empresa ? empresa.nombreCompleto : null,
+    if (!cliente && !empresa) {
+        return { 
+            code: 404, 
+            message: "Perfil no encontrado en la base de datos local.",
+            jwt: null 
         };
     }
+
+    // --- LÓGICA DE ACTUALIZACIÓN DE PUSH TOKEN ---
+    if (pushToken) {
+        try {
+            const updates = [];
+            if (cliente) {
+                updates.push(prisma.cliente.update({
+                    where: { cliente_id: cliente.cliente_id },
+                    data: { pushToken: pushToken }
+                }));
+            }
+            if (empresa) {
+                updates.push(prisma.empresa.update({
+                    where: { empresa_id: empresa.empresa_id },
+                    data: { pushToken: pushToken }
+                }));
+            }
+            await Promise.all(updates);
+            console.log(`PushToken actualizado para: ${email}`);
+        } catch (error) {
+            console.error("Error silencioso al actualizar PushToken:", error);
+        }
+    }
+
+    // 3. Preparar Payload del JWT
+    let payload = { email: email };
+    let rol = 'Guest';
+
+    if (cliente) {
+        payload.cliente_id = cliente.cliente_id;
+        payload.rol = cliente.rol; 
+        rol = cliente.rol;
+    }
+
+    if (empresa) {
+        payload.empresa_id = empresa.empresa_id;
+        payload.rol = 'Empresa';
+        rol = 'Empresa';
+    }
+
+    const jwt = this.fastify.jwt.sign(payload, { expiresIn: '1d' });
+
+    return {
+        code: 200, 
+        message: "Inicio de sesión exitoso", 
+        jwt: jwt,
+        rol: rol,
+        token: cliente ? cliente.cliente_id : null, 
+        cliente: cliente ? cliente.nombreCompleto : null,
+        token_empresa: empresa ? empresa.empresa_id : null,
+        empresa: empresa ? empresa.nombreCompleto : null,
+    };
+}
+
+  async getAllTokens() {
+    const [clientes, empresas] = await Promise.all([
+      prisma.cliente.findMany({ 
+        where: { pushToken: { not: null } }, 
+        select: { pushToken: true } 
+      }),
+      prisma.empresa.findMany({ 
+        where: { pushToken: { not: null } }, 
+        select: { pushToken: true } 
+      })
+    ]);
+
+    return [
+      ...clientes.map(c => c.pushToken),
+      ...empresas.map(e => e.pushToken)
+    ];
+  }
+
+
 
     async createCliente(clientData) {
     // ✅ CORRECCIÓN 1: Descomentar esta línea
