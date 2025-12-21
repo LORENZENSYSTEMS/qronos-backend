@@ -7,15 +7,17 @@ export default async function clienteRoutes(fastify) {
 
 
     // Inicio de sesion 
-    fastify.post('/login', async (request, reply) => {
-        const { email } = request.body; 
-        
-        const res = await clienteService.login(email); 
-        
-        if (res.code >= 400) {
-            reply.code(res.code).send({ message: res.message });
-        } else {
-            reply.code(res.code).send({
+   fastify.post('/login', async (request, reply) => {
+    // Recibimos pushToken desde el body que enviamos en el frontend
+    const { email, pushToken } = request.body; 
+    
+    // Pasamos el pushToken al service
+    const res = await clienteService.login(email, pushToken); 
+    
+    if (res.code >= 400) {
+        reply.code(res.code).send({ message: res.message });
+    } else {
+        reply.code(res.code).send({
                 message: res.message, 
                 token: res.token, 
                 cliente: res.cliente, 
@@ -27,6 +29,7 @@ export default async function clienteRoutes(fastify) {
             });
         }
     });
+
 
     
     // Crear cliente
