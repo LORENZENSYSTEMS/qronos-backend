@@ -12,8 +12,10 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.978.0",
     "@fastify/cors": "^11.2.0",
     "@fastify/jwt": "^10.0.0",
+    "@fastify/multipart": "^9.4.0",
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
     "bcryptjs": "^3.0.3",
@@ -21,6 +23,7 @@
     "expo-server-sdk": "^4.0.0",
     "fastify": "^5.6.2",
     "firebase-admin": "^13.6.0",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
     "pg": "^8.16.3",
     "uuid": "^13.0.0"
