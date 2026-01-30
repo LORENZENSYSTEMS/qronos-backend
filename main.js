@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt'
-import cors from '@fastify/cors'; // Importado
+import cors from '@fastify/cors';
+import multipart from '@fastify/multipart'; // 👈 IMPORTANTE: Nueva librería
 import clienteRoutes from './src/routes/Cliente/cliente.js';
 import EmpresaRouter from './src/routes/Empresa/empresa.js';
 import metricaRoutes from './src/routes/metricasCliente/metrica.js';
@@ -24,6 +25,13 @@ await app.register(cors, {
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
+});
+
+// Configuración de Multipart (Para subir imágenes)
+await app.register(multipart, {
+    limits: {
+        fileSize: 5 * 1024 * 1024 // Limite de 5MB por archivo
+    }
 });
 
 app.register(fastifyJwt, { secret: process.env.TOKEN});
