@@ -44,55 +44,71 @@ export default async function empresaRoutes(fastify) {
   // --- ACTUALIZAR (Lógica FormData para imágenes y texto) ---
   fastify.put('/:id', async (request, reply) => {
     console.log("Headers recibidos:", request.headers['content-type']);
-    try {
-      // Objeto donde acumularemos los datos limpios para enviar al servicio
-      const dataToUpdate = {};
 
-      // request.parts() devuelve un iterador asíncrono.
-      // Es la forma más eficiente de manejar subidas de archivos en Fastify.
+    // Lista de campos permitidos en el modelo Empresa (según schema.prisma)
+    const allowedFields = [
+      'nombreCompleto', 'correo', 'contrasena', 'pushToken',
+      'fotoPerfil', 'fotoDescripcion1', 'fotoDescripcion2', 'fotoDescripcion3',
+      'ubicacionMaps', 'descuento', 'descripcion', 'pais', 'ciudad', 'categoria'
+    ];
+
+    try {
+      const dataToUpdate = {};
       const parts = request.parts();
 
       for await (const part of parts) {
         if (part.file) {
           // --- ES UN ARCHIVO (IMAGEN) ---
           try {
-            // Convertimos el stream a buffer para poder subirlo a S3
             const buffer = await part.toBuffer();
 
-            // Solo subimos si el buffer tiene contenido
-            if (buffer.length > 0) {
-              const url = await uploadToS3(buffer, part.filename, part.mimetype);
-              // Guardamos la URL resultante en el objeto de actualización
-              dataToUpdate[part.fieldname] = url;
+            if (buffer && buffer.length > 0) {
+              // Verificamos que el fieldname sea uno de los campos de imagen permitidos
+              if (allowedFields.includes(part.fieldname)) {
+                const url = await uploadToS3(buffer, part.filename, part.mimetype);
+                dataToUpdate[part.fieldname] = url;
+                console.log(`Imagen subida: ${part.fieldname} -> ${url}`);
+              } else {
+                console.warn(`Campo de archivo no permitido: ${part.fieldname}`);
+              }
             }
           } catch (err) {
             console.error(`Error subiendo imagen ${part.fieldname}:`, err);
-            // Opcional: Podrías lanzar error o continuar con el resto de campos
+            // Si falla la subida de una imagen crítica, podrías decidir fallar toda la petición
           }
         } else {
-          // --- ES UN CAMPO DE TEXTO (descripcion, pais, etc.) ---
-          // FormData convierte todo a string. Filtramos "undefined" o "null" textuales.
-          if (part.value !== 'undefined' && part.value !== 'null') {
-            // Convertimos 'true'/'false' strings a booleanos si es necesario, 
-            // o lo dejamos como string según tu DB.
-            dataToUpdate[part.fieldname] = part.value;
+          // --- ES UN CAMPO DE TEXTO ---
+          // Solo agregamos si está en la whitelist y no es un valor nulo/undefined textual
+          if (allowedFields.includes(part.fieldname)) {
+            if (part.value !== 'undefined' && part.value !== 'null') {
+              dataToUpdate[part.fieldname] = part.value;
+            }
+          } else {
+            // Ignoramos campos como 'empresa_id' o 'id' que vengan en el body
+            console.warn(`Campo de texto ignorado (no en whitelist): ${part.fieldname}`);
           }
         }
       }
 
-      // Si no llegó ningún dato válido, devolvemos error (opcional)
+      // Si no llegó ningún dato válido para actualizar
       if (Object.keys(dataToUpdate).length === 0) {
-        return reply.code(400).send({ message: "No se enviaron datos para actualizar." });
+        return reply.code(400).send({
+          message: "No se enviaron datos válidos para actualizar.",
+          fields_sent: Object.keys(dataToUpdate)
+        });
       }
 
-      // Llamamos al servicio con los datos ya procesados (URLs y textos)
+      // Llamamos al servicio con los datos ya procesados
       const result = await empresaService.updateEmpresa(request.params.id, dataToUpdate);
 
       return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
 
     } catch (error) {
-      console.error("Error procesando multipart:", error);
-      return reply.code(500).send({ message: "Error interno procesando la subida de archivos." });
+      console.error("Error crítico procesando multipart:", error);
+      return reply.code(500).send({
+        message: "Error interno procesando la subida de archivos.",
+        error: error.message
+      });
     }
   });
 
