@@ -8,19 +8,18 @@ const s3Client = new S3Client({
     },
 });
 
-export const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
+export const uploadToS3 = async (fileBuffer, fileName, mimetype, folder = "perfiles") => {
     const bucketName = process.env.S3_BUCKET_NAME;
-    const key = `perfiles/${Date.now()}-${fileName}`;
+    const key = `${folder}/${Date.now()}-${fileName}`;
 
     const command = new PutObjectCommand({
         Bucket: bucketName,
         Key: key,
         Body: fileBuffer,
-        ContentType: mimetype, // Esto permite que la imagen se vea en el navegador
+        ContentType: mimetype,
     });
 
     await s3Client.send(command);
-    
-    // Retornamos la URL lista para guardar en la base de datos
+
     return `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 };

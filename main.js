@@ -51,7 +51,7 @@ app.register(EmpresaRouter, { prefix: '/api/empresa' });
 app.register(metricaRoutes, { prefix: '/api/metricas' });
 app.register(qrRoutes, { prefix: '/api/qr' });
 app.register(landingRoutes, { prefix: '/api/landing' });
-app.register(productoRoutes, { prefix: '/api/productos' });
+app.register(productoRoutes, { prefix: '/api' });
 
 const start = async () => {
   try {

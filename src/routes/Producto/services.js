@@ -23,16 +23,16 @@ export class ProductoService {
             const nuevoProducto = await prisma.producto.create({
                 data: {
                     nombre: data.nombre,
-                    precio: Number(data.precio),
+                    precio: parseFloat(data.precio),
                     imagenUrl: data.imagenUrl,
                     descripcion: data.descripcion || null,
-                    empresa_id: Number(data.empresa_id),
+                    empresa_id: parseInt(data.empresa_id),
                 },
             });
             return { code: 201, message: "Producto creado con éxito", producto: nuevoProducto };
         } catch (error) {
             this.fastify.log.error(error);
-            return { code: 500, message: "Error al crear el producto", error: error.message };
+            return { code: 500, message: "Error al crear el producto en la base de datos", error: error.message };
         }
     }
 }
