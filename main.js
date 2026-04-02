@@ -9,6 +9,7 @@ import metricaRoutes from './src/routes/metricasCliente/metrica.js';
 import qrRoutes from './src/routes/Qr/qr.router.js';
 import notificationRoutes from './src/routes/notifications/notifications.js';
 import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
+import productoRoutes from './src/routes/Producto/producto.js';
 
 const app = Fastify({ logger: true });
 
@@ -17,7 +18,7 @@ await app.register(cors, {
   origin: (origin, cb) => {
     // Permitimos peticiones sin origen (como React Native, Postman o dispositivos móviles)
     // y peticiones de dominios específicos (tu frontend de Astro)
-    if (!origin || /localhost/.test(origin) || origin === 'https://qronos.com.co') {
+    if (!origin || /localhost/.test(origin) || origin === 'https://qronos.co') {
       cb(null, true);
       return;
     }
@@ -29,12 +30,12 @@ await app.register(cors, {
 
 // Configuración de Multipart (Para subir imágenes)
 await app.register(multipart, {
-    limits: {
-        fileSize: 5 * 1024 * 1024 // Limite de 5MB por archivo
-    }
+  limits: {
+    fileSize: 5 * 1024 * 1024 // Limite de 5MB por archivo
+  }
 });
 
-app.register(fastifyJwt, { secret: process.env.TOKEN});
+app.register(fastifyJwt, { secret: process.env.TOKEN });
 app.decorate("authenticate", async (request, reply) => {
   try {
     await request.jwtVerify();
@@ -45,11 +46,12 @@ app.decorate("authenticate", async (request, reply) => {
 
 app.get('/', async (request, reply) => { return { status: "running", uptime: process.uptime() } });
 app.register(notificationRoutes, { prefix: '/api/notifications' });
-app.register(clienteRoutes, { prefix: '/api/cliente' }); 
+app.register(clienteRoutes, { prefix: '/api/cliente' });
 app.register(EmpresaRouter, { prefix: '/api/empresa' });
 app.register(metricaRoutes, { prefix: '/api/metricas' });
 app.register(qrRoutes, { prefix: '/api/qr' });
 app.register(landingRoutes, { prefix: '/api/landing' });
+app.register(productoRoutes, { prefix: '/api/productos' });
 
 const start = async () => {
   try {
