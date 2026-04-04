@@ -4,65 +4,57 @@ import { firebaseAdminAuth } from "../../plugins/firebaseAdmin.js"; // 👈 Impo
 export class EmpresaService {
 
   async login(email) {
-        // 1. Buscar la empresa por correo para obtener el ID de tu DB y el nombre
-        const empresa = await prisma.empresa.findFirst({
-            where: { correo: email }
-            // Nota: Aquí podrías usar findUnique si 'correo' es @unique
-        });
+    // 1. Buscar la empresa por correo para obtener el ID de tu DB y el nombre
+    const empresa = await prisma.empresa.findFirst({
+      where: { correo: email }
+      // Nota: Aquí podrías usar findUnique si 'correo' es @unique
+    });
 
-        if (!empresa) {
-            // Este error será capturado por el frontend
-            return { code: 404, message: "Perfil de empresa no encontrado en la base de datos." };
-        }
-
-        // 2. Respuesta de login exitoso
-        return {
-            code: 200,
-            message: "Inicio de sesión de empresa exitoso",
-            empresa: empresa.nombreCompleto,
-            token_empresa: empresa.empresa_id,
-            // Aquí puedes añadir el auth_uid si el frontend lo necesita
-            auth_uid: empresa.auth_uid 
-        };
+    if (!empresa) {
+      // Este error será capturado por el frontend
+      return { code: 404, message: "Perfil de empresa no encontrado en la base de datos." };
     }
 
-  // Crear Empresa (Lógica Backend completa)
+    // 2. Respuesta de login exitoso
+    return {
+      code: 200,
+      message: "Inicio de sesión de empresa exitoso",
+      empresa: empresa.nombreCompleto,
+      token_empresa: empresa.empresa_id,
+      // Aquí puedes añadir el auth_uid si el frontend lo necesita
+      auth_uid: empresa.auth_uid
+    };
+  }
+
+  // Crear Empresa (Lógica Backend completa - Transparente para el Admin)
   async createEmpresa(data) {
     try {
       // 1. CREAR USUARIO EN FIREBASE (Desde el Backend)
-      // Esto genera el UID automáticamente
+      // Forzamos emailVerified: true para que no deban verificar manualmente
       const firebaseUser = await firebaseAdminAuth.createUser({
         email: data.correo,
         password: data.contrasena,
         displayName: data.nombreCompleto,
-        emailVerified: false, // Nace sin verificar
+        emailVerified: true, // ✅ Ahora se crea verificado automáticamente
         disabled: false
       });
 
-      const authUidGenerado = firebaseUser.uid; // ✅ Ya tenemos el UID real
+      const authUidGenerado = firebaseUser.uid;
 
-      // 2. GENERAR ENLACE DE VERIFICACIÓN
-      // El Admin SDK no envía el correo, pero genera el link.
-      // Para pruebas en Postman, devolveremos este link en la respuesta.
-      // En producción, aquí usarías Nodemailer para enviar este link por email.
-      const verificationLink = await firebaseAdminAuth.generateEmailVerificationLink(data.correo);
-
-      // 3. GUARDAR EN LA BASE DE DATOS (PRISMA)
+      // 2. GUARDAR EN LA BASE DE DATOS (PRISMA)
       const nuevaEmpresa = await prisma.empresa.create({
         data: {
           nombreCompleto: data.nombreCompleto,
           correo: data.correo,
-          contrasena: data.contrasena, // Puedes guardarla o no, Firebase ya la tiene
-          auth_uid: authUidGenerado // 👈 Guardamos el UID real de Firebase
+          contrasena: data.contrasena,
+          auth_uid: authUidGenerado
         }
       });
 
-      return { 
-        code: 201, 
-        message: "Empresa creada con éxito.", 
-        empresa: nuevaEmpresa,
-        // 👇 IMPORTANTE: En Postman verás este link. Copialo y pégalo en el navegador para verificar.
-        verificationUrl: verificationLink 
+      return {
+        code: 201,
+        message: "Tienda (Empresa) registrada con éxito y verificada.",
+        empresa: nuevaEmpresa
       };
 
     } catch (err) {
@@ -119,11 +111,11 @@ export class EmpresaService {
     try {
       // Primero obtenemos el auth_uid para borrarlo de Firebase también
       const empresa = await prisma.empresa.findUnique({ where: { empresa_id: Number(id) } });
-      
+
       if (empresa && empresa.auth_uid) {
-         try {
-             await firebaseAdminAuth.deleteUser(empresa.auth_uid);
-         } catch(e) { console.log("Usuario no encontrado en Firebase o ya eliminado"); }
+        try {
+          await firebaseAdminAuth.deleteUser(empresa.auth_uid);
+        } catch (e) { console.log("Usuario no encontrado en Firebase o ya eliminado"); }
       }
 
       const empresaEliminada = await prisma.empresa.delete({
@@ -139,12 +131,12 @@ export class EmpresaService {
   // NUEVO MÉTODO PARA PRUEBAS
   async verifyEmpresaManually(auth_uid) {
     try {
-        await firebaseAdminAuth.updateUser(auth_uid, {
-            emailVerified: true
-        });
-        return { code: 200, message: "Usuario verificado manualmente en Firebase." };
+      await firebaseAdminAuth.updateUser(auth_uid, {
+        emailVerified: true
+      });
+      return { code: 200, message: "Usuario verificado manualmente en Firebase." };
     } catch (err) {
-        return { code: 500, message: "Error al verificar usuario en Firebase Admin", error: err.message };
+      return { code: 500, message: "Error al verificar usuario en Firebase Admin", error: err.message };
     }
   }
 }
