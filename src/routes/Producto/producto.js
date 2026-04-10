@@ -64,4 +64,32 @@ export default async function productoRoutes(fastify) {
             });
         }
     });
+
+    // --- ELIMINAR PRODUCTO ---
+    // DELETE /api/productos/:id
+    fastify.delete('/productos/:id', async (request, reply) => {
+        try {
+            const { id } = request.params;
+            const productoId = parseInt(id, 10);
+
+            if (isNaN(productoId)) {
+                return reply.code(400).send({ message: "ID de producto inválido. Debe ser un número." });
+            }
+
+            const result = await productoService.deleteProducto(productoId);
+
+            if (result.code === 200) {
+                return reply.code(result.code).send({ success: result.success, message: result.message });
+            }
+            
+            return reply.code(result.code).send(result);
+            
+        } catch (error) {
+            fastify.log.error(error);
+            return reply.code(500).send({
+                message: "Error interno del servidor",
+                error: error.message
+            });
+        }
+    });
 }

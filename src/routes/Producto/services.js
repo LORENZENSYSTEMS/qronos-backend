@@ -35,4 +35,27 @@ export class ProductoService {
             return { code: 500, message: "Error al crear el producto en la base de datos", error: error.message };
         }
     }
+
+    async deleteProducto(productoId) {
+        try {
+            const id = Number(productoId);
+            const productoExistente = await prisma.producto.findUnique({
+                where: { producto_id: id }
+            });
+
+            if (!productoExistente) {
+                return { code: 404, message: "Producto no encontrado" };
+            }
+
+            await prisma.producto.delete({
+                where: { producto_id: id }
+            });
+
+            return { code: 200, success: true, message: 'Producto eliminado' };
+            
+        } catch (error) {
+            this.fastify.log.error(error);
+            return { code: 500, message: "Error al eliminar el producto de la base de datos", error: error.message };
+        }
+    }
 }
