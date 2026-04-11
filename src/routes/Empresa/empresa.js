@@ -1,5 +1,5 @@
 import { EmpresaService } from "./services.js";
-// 👇 Asegúrate de que esta ruta sea correcta según tu estructura de carpetas
+// Asegúrate de que esta ruta sea correcta según tu estructura de carpetas
 import { uploadToS3 } from "../../utils/s3Config.js";
 
 export default async function empresaRoutes(fastify) {
@@ -41,15 +41,15 @@ export default async function empresaRoutes(fastify) {
     return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
   });
 
-  // --- ACTUALIZAR (Lógica FormData para imágenes y texto) ---
+  // --- ACTUALIZAR (Lógica FormData para imágenes, texto y WhatsApp) ---
   fastify.put('/:id', async (request, reply) => {
     console.log("Headers recibidos:", request.headers['content-type']);
 
-    // Lista de campos permitidos en el modelo Empresa (según schema.prisma)
+    // Lista de campos permitidos en el modelo Empresa (Incluyendo 'whatsapp')
     const allowedFields = [
       'nombreCompleto', 'correo', 'contrasena', 'pushToken',
       'fotoPerfil', 'fotoDescripcion1', 'fotoDescripcion2', 'fotoDescripcion3',
-      'ubicacionMaps', 'descuento', 'descripcion', 'pais', 'ciudad', 'categoria'
+      'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 'categoria'
     ];
 
     try {
@@ -74,23 +74,21 @@ export default async function empresaRoutes(fastify) {
             }
           } catch (err) {
             console.error(`Error subiendo imagen ${part.fieldname}:`, err);
-            // Si falla la subida de una imagen crítica, podrías decidir fallar toda la petición
           }
         } else {
           // --- ES UN CAMPO DE TEXTO ---
-          // Solo agregamos si está en la whitelist y no es un valor nulo/undefined textual
           if (allowedFields.includes(part.fieldname)) {
+            // No procesamos valores que vengan como 'null' o 'undefined' en string desde el FormData
             if (part.value !== 'undefined' && part.value !== 'null') {
               dataToUpdate[part.fieldname] = part.value;
             }
           } else {
-            // Ignoramos campos como 'empresa_id' o 'id' que vengan en el body
             console.warn(`Campo de texto ignorado (no en whitelist): ${part.fieldname}`);
           }
         }
       }
 
-      // Si no llegó ningún dato válido para actualizar
+      // Validación de datos
       if (Object.keys(dataToUpdate).length === 0) {
         return reply.code(400).send({
           message: "No se enviaron datos válidos para actualizar.",
@@ -98,7 +96,7 @@ export default async function empresaRoutes(fastify) {
         });
       }
 
-      // Llamamos al servicio con los datos ya procesados
+      // Llamamos al servicio para actualizar en Prisma
       const result = await empresaService.updateEmpresa(request.params.id, dataToUpdate);
 
       return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
@@ -106,7 +104,7 @@ export default async function empresaRoutes(fastify) {
     } catch (error) {
       console.error("Error crítico procesando multipart:", error);
       return reply.code(500).send({
-        message: "Error interno procesando la subida de archivos.",
+        message: "Error interno procesando la subida de datos.",
         error: error.message
       });
     }

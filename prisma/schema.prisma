@@ -40,6 +40,7 @@ model Empresa {
   fotoDescripcion2 String? // URL de la imagen
   fotoDescripcion3 String? // URL de la imagen
   ubicacionMaps    String? // Link de Google Maps o Lat/Lng
+  whatsapp         String? // ✅ NUEVO CAMPO PARA EL CONTACTO
   descuento        String? // Ej: "10%", "2x1"
   descripcion      String? // Texto largo
   pais             String?
