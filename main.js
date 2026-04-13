@@ -9,7 +9,7 @@ import metricaRoutes from './src/routes/metricasCliente/metrica.js';
 import qrRoutes from './src/routes/Qr/qr.router.js';
 import notificationRoutes from './src/routes/notifications/notifications.js';
 import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
-import productoRoutes from './src/routes/Producto/producto.js';
+import productoRoutes from './src/routes/producto/producto.js';
 
 const app = Fastify({ logger: true });
 
