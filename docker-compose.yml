@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules # Evita que tu node_modules local pise la del contenedor
+    env_file:
+      - .env
+    command: npm run start # O el comando que uses para desarrollo (ej. nodemon)
