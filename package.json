@@ -19,18 +19,18 @@
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
     "bcryptjs": "^3.0.3",
-    "dotenv": "^17.4.2",
+    "dotenv": "^17.2.3",
     "expo-server-sdk": "^4.0.0",
     "fastify": "^5.6.2",
-    "firebase-admin": "^13.8.0",
+    "firebase-admin": "^13.6.0",
     "multer": "^2.0.2",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^7.0.11",
     "pg": "^8.16.3",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
-    "prisma": "^6.19.3"
+    "prisma": "^7.0.0"
   }
 }
