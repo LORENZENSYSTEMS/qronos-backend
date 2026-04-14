@@ -1,10 +1,8 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { createRequire } from "module";
 
-const require = createRequire(import.meta.url);
-const serviceAccount = require("../../serviceAccountKey.json");
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 // Corregir saltos de línea en la clave privada si es necesario
 if (serviceAccount.private_key && typeof serviceAccount.private_key === 'string') {
