@@ -195,7 +195,7 @@ describe('Suite de Pruebas: Productos (Unitarias e Integración)', () => {
 
       // Assert
       expect(response.statusCode).toBe(500);
-      expect(JSON.parse(response.body).message).toContain('Error al procesar la edición');
+      expect(JSON.parse(response.body).message).toContain('Error al actualizar el producto');
     });
   });
 });
