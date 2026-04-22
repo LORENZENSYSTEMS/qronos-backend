@@ -95,4 +95,56 @@ export default async function productoRoutes(fastify) {
             });
         }
     });
+
+    // --- EDITAR PRODUCTO ---
+    // PUT /api/productos/:id
+    fastify.put('/productos/:id', async (request, reply) => {
+        const { id } = request.params;
+        const productoId = parseInt(id, 10);
+
+        if (isNaN(productoId)) {
+            return reply.code(400).send({ message: "ID de producto inválido. Debe ser un número." });
+        }
+
+        try {
+            const data = {};
+            let fileBuffer = null;
+            let fileName = '';
+            let mimetype = '';
+
+            if (request.isMultipart()) {
+                const parts = request.parts();
+                for await (const part of parts) {
+                    if (part.file) {
+                        fileBuffer = await part.toBuffer();
+                        fileName = part.filename;
+                        mimetype = part.mimetype;
+                    } else {
+                        data[part.fieldname] = part.value;
+                    }
+                }
+            } else {
+                Object.assign(data, request.body);
+            }
+
+            let imageUrl = data.imagenUrl;
+            if (fileBuffer) {
+                imageUrl = await uploadToS3(fileBuffer, fileName, mimetype, "productos");
+            }
+
+            const result = await productoService.updateProducto(productoId, {
+                ...data,
+                imagenUrl: imageUrl
+            });
+
+            return reply.code(result.code).send(result.code === 200 ? result.producto : result);
+
+        } catch (error) {
+            fastify.log.error(error);
+            return reply.code(500).send({
+                message: "Error al procesar la edición del producto",
+                error: error.message
+            });
+        }
+    });
 }

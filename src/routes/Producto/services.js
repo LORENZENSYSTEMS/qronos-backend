@@ -5,6 +5,7 @@ export class ProductoService {
         this.fastify = fastify;
     }
 
+    // Obtener productos por empresa
     async getProductosByEmpresa(empresaId) {
         try {
             const productos = await prisma.producto.findMany({
@@ -18,6 +19,7 @@ export class ProductoService {
         }
     }
 
+    // Crear producto
     async createProducto(data) {
         try {
             const nuevoProducto = await prisma.producto.create({
@@ -36,6 +38,7 @@ export class ProductoService {
         }
     }
 
+    // Eliminar producto
     async deleteProducto(productoId) {
         try {
             const id = Number(productoId);
@@ -52,10 +55,40 @@ export class ProductoService {
             });
 
             return { code: 200, success: true, message: 'Producto eliminado' };
-            
+
         } catch (error) {
             this.fastify.log.error(error);
             return { code: 500, message: "Error al eliminar el producto de la base de datos", error: error.message };
+        }
+    }
+
+    // Actualizar producto
+    async updateProducto(productoId, data) {
+        try {
+            const id = Number(productoId);
+            const productoExistente = await prisma.producto.findUnique({
+                where: { producto_id: id }
+            });
+
+            if (!productoExistente) {
+                return { code: 404, message: "Producto no encontrado" };
+            }
+
+            const updateData = {};
+            if (data.nombre) updateData.nombre = data.nombre;
+            if (data.precio) updateData.precio = parseFloat(data.precio);
+            if (data.imagenUrl) updateData.imagenUrl = data.imagenUrl;
+            if (data.descripcion !== undefined) updateData.descripcion = data.descripcion;
+
+            const productoActualizado = await prisma.producto.update({
+                where: { producto_id: id },
+                data: updateData,
+            });
+
+            return { code: 200, message: "Producto actualizado con éxito", producto: productoActualizado };
+        } catch (error) {
+            this.fastify.log.error(error);
+            return { code: 500, message: "Error al actualizar el producto en la base de datos", error: error.message };
         }
     }
 }

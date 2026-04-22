@@ -12,6 +12,7 @@ vi.mock('../src/plugins/database.js', () => ({
       create: vi.fn(),
       findUnique: vi.fn(),
       delete: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -127,6 +128,74 @@ describe('Suite de Pruebas: Productos (Unitarias e Integración)', () => {
       // Assert
       expect(response.statusCode).toBe(400);
       expect(JSON.parse(response.body).message).toContain('ID de producto inválido');
+    });
+  });
+
+  describe('PUT /productos/:id', () => {
+    it('debe retornar 200 y el producto actualizado (Happy Path - JSON)', async () => {
+      // Arrange
+      const productoId = 10;
+      const updatedProducto = { producto_id: productoId, nombre: 'Producto Editado', precio: 25.5 };
+      prisma.producto.findUnique.mockResolvedValue({ producto_id: productoId });
+      prisma.producto.update.mockResolvedValue(updatedProducto);
+
+      // Act
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/productos/${productoId}`,
+        payload: { nombre: 'Producto Editado', precio: 25.5 },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.body)).toEqual(updatedProducto);
+      expect(prisma.producto.update).toHaveBeenCalled();
+    });
+
+    it('debe retornar 404 si el producto a editar no existe', async () => {
+      // Arrange
+      prisma.producto.findUnique.mockResolvedValue(null);
+
+      // Act
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/productos/999',
+        payload: { nombre: 'Inexistente' },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body).message).toBe('Producto no encontrado');
+    });
+
+    it('debe retornar 400 si el ID es inválido', async () => {
+      // Act
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/productos/invalido',
+        payload: { nombre: 'Test' },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(JSON.parse(response.body).message).toContain('ID de producto inválido');
+    });
+
+    it('debe retornar 500 si falla la base de datos al actualizar', async () => {
+      // Arrange
+      prisma.producto.findUnique.mockResolvedValue({ producto_id: 1 });
+      prisma.producto.update.mockRejectedValue(new Error('DB Error'));
+
+      // Act
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/productos/1',
+        payload: { nombre: 'Falla' },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(500);
+      expect(JSON.parse(response.body).message).toContain('Error al procesar la edición');
     });
   });
 });
