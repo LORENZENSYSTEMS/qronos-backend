@@ -20,6 +20,9 @@ export default async function productoRoutes(fastify) {
     // --- CREAR PRODUCTO ---
     // POST /api/productos
     fastify.post('/productos', async (request, reply) => {
+        if (!request.isMultipart()) {
+            return reply.code(400).send({ message: "La petición debe ser multipart/form-data" });
+        }
         try {
             const data = {};
             let fileBuffer = null;
