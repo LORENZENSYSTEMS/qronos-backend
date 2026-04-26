@@ -106,11 +106,12 @@ export class EmpresaService {
     }
   }
 
-  // Eliminar (Ojo: También deberíamos eliminar de Firebase)
+  // Eliminar (Ojo: También deberíamos eliminar de Firebase y sus datos asociados)
   async deleteEmpresa(id) {
     try {
+      const empresaId = Number(id);
       // Primero obtenemos el auth_uid para borrarlo de Firebase también
-      const empresa = await prisma.empresa.findUnique({ where: { empresa_id: Number(id) } });
+      const empresa = await prisma.empresa.findUnique({ where: { empresa_id: empresaId } });
 
       if (empresa && empresa.auth_uid) {
         try {
@@ -118,13 +119,23 @@ export class EmpresaService {
         } catch (e) { console.log("Usuario no encontrado en Firebase o ya eliminado"); }
       }
 
-      const empresaEliminada = await prisma.empresa.delete({
-        where: { empresa_id: Number(id) }
-      });
-      return { code: 200, message: "Empresa eliminada", empresa: empresaEliminada };
+      // Usamos una transacción para asegurar que se borren los productos, métricas y la empresa de forma atómica
+      const [productosEliminados, metricasEliminadas, empresaEliminada] = await prisma.$transaction([
+        prisma.producto.deleteMany({ where: { empresa_id: empresaId } }),
+        prisma.metrica.deleteMany({ where: { empresa_id: empresaId } }),
+        prisma.empresa.delete({ where: { empresa_id: empresaId } })
+      ]);
+
+      return { 
+        code: 200, 
+        message: "Empresa y todos sus productos y métricas asociados han sido eliminados.", 
+        empresa: empresaEliminada,
+        productosBorrados: productosEliminados.count,
+        metricasBorradas: metricasEliminadas.count
+      };
     } catch (err) {
       if (err.code === 'P2025') return { code: 404, message: "Empresa no encontrada", error: err.message };
-      return { code: 500, message: "Error al eliminar", error: err.message };
+      return { code: 500, message: "Error al eliminar la empresa y sus datos", error: err.message };
     }
   }
 
