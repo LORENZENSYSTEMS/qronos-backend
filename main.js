@@ -3,13 +3,13 @@ import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt'
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart'; // 👈 IMPORTANTE: Nueva librería
-import clienteRoutes from './src/routes/cliente/cliente.js';
-import EmpresaRouter from './src/routes/empresa/empresa.js';
+import clienteRoutes from './src/routes/Cliente/cliente.js';
+import EmpresaRouter from './src/routes/Empresa/empresa.js';
 import metricaRoutes from './src/routes/metricasCliente/metrica.js';
 import qrRoutes from './src/routes/Qr/qr.router.js';
 import notificationRoutes from './src/routes/notifications/notifications.js';
-import landingRoutes from './src/routes/metricasLandingPage/landing.js';
-import productoRoutes from './src/routes/producto/producto.js';
+import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
+import productoRoutes from './src/routes/Producto/producto.js';
 
 const app = Fastify({ logger: true });
 
