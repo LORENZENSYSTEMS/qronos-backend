@@ -110,9 +110,9 @@ export default async function empresaRoutes(fastify) {
     }
   });
 
-  // --- ELIMINAR ---
-  fastify.delete('/:id', async (request, reply) => {
-    const result = await empresaService.deleteEmpresa(request.params.id);
+  // --- ELIMINAR POR CORREO ---
+  fastify.delete('/:correo', async (request, reply) => {
+    const result = await empresaService.deleteEmpresa(request.params.correo);
     return reply.code(result.code).send(result);
   });
 

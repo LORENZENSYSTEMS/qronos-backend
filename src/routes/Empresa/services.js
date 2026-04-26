@@ -106,20 +106,28 @@ export class EmpresaService {
     }
   }
 
-  // Eliminar (Ojo: También deberíamos eliminar de Firebase y sus datos asociados)
-  async deleteEmpresa(id) {
+  // Eliminar por Correo
+  async deleteEmpresa(email) {
     try {
-      const empresaId = Number(id);
-      // Primero obtenemos el auth_uid para borrarlo de Firebase también
-      const empresa = await prisma.empresa.findUnique({ where: { empresa_id: empresaId } });
+      // 1. Primero obtenemos la empresa por correo para tener su ID y su auth_uid
+      const empresa = await prisma.empresa.findUnique({ where: { correo: email } });
 
-      if (empresa && empresa.auth_uid) {
-        try {
-          await firebaseAdminAuth.deleteUser(empresa.auth_uid);
-        } catch (e) { console.log("Usuario no encontrado en Firebase o ya eliminado"); }
+      if (!empresa) {
+        return { code: 404, message: "Empresa no encontrada con ese correo." };
       }
 
-      // Usamos una transacción para asegurar que se borren los productos, métricas y la empresa de forma atómica
+      const empresaId = empresa.empresa_id;
+
+      // 2. Borrar de Firebase si tiene auth_uid
+      if (empresa.auth_uid) {
+        try {
+          await firebaseAdminAuth.deleteUser(empresa.auth_uid);
+        } catch (e) { 
+          console.log("Usuario no encontrado en Firebase o ya eliminado:", e.message); 
+        }
+      }
+
+      // 3. Usamos una transacción para asegurar que se borren los productos, métricas y la empresa de forma atómica
       const [productosEliminados, metricasEliminadas, empresaEliminada] = await prisma.$transaction([
         prisma.producto.deleteMany({ where: { empresa_id: empresaId } }),
         prisma.metrica.deleteMany({ where: { empresa_id: empresaId } }),
@@ -134,7 +142,7 @@ export class EmpresaService {
         metricasBorradas: metricasEliminadas.count
       };
     } catch (err) {
-      if (err.code === 'P2025') return { code: 404, message: "Empresa no encontrada", error: err.message };
+      console.error("Error al eliminar empresa:", err);
       return { code: 500, message: "Error al eliminar la empresa y sus datos", error: err.message };
     }
   }
