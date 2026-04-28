@@ -5,14 +5,16 @@ import {ClienteService} from './services.js';
 export default async function clienteRoutes(fastify) {
     const clienteService = new ClienteService(fastify);
 
-
     // Inicio de sesion 
    fastify.post('/login', async (request, reply) => {
     // Recibimos pushToken desde el body que enviamos en el frontend
     const { email, pushToken } = request.body; 
     
-    // Pasamos el pushToken al service
-    const res = await clienteService.login(email, pushToken); 
+    // Normalizamos el correo eliminando espacios y forzando minúsculas
+    const emailNormalizado = email ? email.trim().toLowerCase() : '';
+    
+    // Pasamos el correo normalizado al service
+    const res = await clienteService.login(emailNormalizado, pushToken); 
     
     if (res.code >= 400) {
         reply.code(res.code).send({ message: res.message });
@@ -30,8 +32,6 @@ export default async function clienteRoutes(fastify) {
         }
     });
 
-
-    
     // Crear cliente
     fastify.post('/', async (request, reply) => {
         const data = request.body;

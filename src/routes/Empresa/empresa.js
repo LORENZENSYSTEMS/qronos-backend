@@ -8,7 +8,11 @@ export default async function empresaRoutes(fastify) {
   // --- LOGIN ---
   fastify.post('/login', async (request, reply) => {
     const { email } = request.body;
-    const res = await empresaService.login(email);
+    
+    // Normalizamos el correo eliminando espacios y forzando minúsculas
+    const emailNormalizado = email ? email.trim().toLowerCase() : '';
+    
+    const res = await empresaService.login(emailNormalizado);
 
     if (res.code >= 400) {
       return reply.code(res.code).send({ message: res.message });
@@ -112,7 +116,9 @@ export default async function empresaRoutes(fastify) {
 
   // --- ELIMINAR POR CORREO ---
   fastify.delete('/:correo', async (request, reply) => {
-    const result = await empresaService.deleteEmpresa(request.params.correo);
+    // También es buena práctica limpiar el correo que llega por URL
+    const correoNormalizado = request.params.correo ? decodeURIComponent(request.params.correo).trim().toLowerCase() : '';
+    const result = await empresaService.deleteEmpresa(correoNormalizado);
     return reply.code(result.code).send(result);
   });
 

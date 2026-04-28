@@ -8,14 +8,27 @@ export class ClienteService {
     }
 
     async login(email, pushToken) {
-    // 1. Buscar Cliente
+    // Aseguramos que el email esté en minúsculas por doble seguridad
+    const safeEmail = email ? email.trim().toLowerCase() : '';
+
+    // 1. Buscar Cliente (ignorando mayúsculas/minúsculas en la DB)
     const cliente = await prisma.cliente.findFirst({
-        where: { correo: email },
+        where: { 
+            correo: {
+                equals: safeEmail,
+                mode: 'insensitive' // Busca sin importar si en la DB está en mayúsculas
+            } 
+        },
     });
 
-    // 2. Buscar Empresa
+    // 2. Buscar Empresa (ignorando mayúsculas/minúsculas en la DB)
     const empresa = await prisma.empresa.findFirst({
-        where: { correo: email },
+        where: { 
+            correo: {
+                equals: safeEmail,
+                mode: 'insensitive'
+            }
+        },
         omit: { contrasena: true }
     });
 
@@ -44,14 +57,14 @@ export class ClienteService {
                 }));
             }
             await Promise.all(updates);
-            console.log(`PushToken actualizado para: ${email}`);
+            console.log(`PushToken actualizado para: ${safeEmail}`);
         } catch (error) {
             console.error("Error silencioso al actualizar PushToken:", error);
         }
     }
 
     // 3. Preparar Payload del JWT
-    let payload = { email: email };
+    let payload = { email: safeEmail };
     let rol = 'Guest';
 
     if (cliente) {
@@ -97,8 +110,6 @@ export class ClienteService {
       ...empresas.map(e => e.pushToken)
     ];
   }
-
-
 
     async createCliente(clientData) {
     // ✅ CORRECCIÓN 1: Descomentar esta línea

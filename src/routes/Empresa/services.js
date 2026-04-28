@@ -4,10 +4,16 @@ import { firebaseAdminAuth } from "../../plugins/firebaseAdmin.js"; // 👈 Impo
 export class EmpresaService {
 
   async login(email) {
-    // 1. Buscar la empresa por correo para obtener el ID de tu DB y el nombre
+    const safeEmail = email ? email.trim().toLowerCase() : '';
+
+    // 1. Buscar la empresa por correo para obtener el ID de tu DB y el nombre (ignorando mayúsculas)
     const empresa = await prisma.empresa.findFirst({
-      where: { correo: email }
-      // Nota: Aquí podrías usar findUnique si 'correo' es @unique
+      where: { 
+        correo: {
+          equals: safeEmail,
+          mode: 'insensitive'
+        }
+      }
     });
 
     if (!empresa) {
@@ -29,10 +35,13 @@ export class EmpresaService {
   // Crear Empresa (Lógica Backend completa - Transparente para el Admin)
   async createEmpresa(data) {
     try {
+      // Normalizamos el correo antes de registrar para evitar inconsistencias a futuro
+      const safeEmail = data.correo ? data.correo.trim().toLowerCase() : '';
+
       // 1. CREAR USUARIO EN FIREBASE (Desde el Backend)
       // Forzamos emailVerified: true para que no deban verificar manualmente
       const firebaseUser = await firebaseAdminAuth.createUser({
-        email: data.correo,
+        email: safeEmail,
         password: data.contrasena,
         displayName: data.nombreCompleto,
         emailVerified: true, // ✅ Ahora se crea verificado automáticamente
@@ -45,7 +54,7 @@ export class EmpresaService {
       const nuevaEmpresa = await prisma.empresa.create({
         data: {
           nombreCompleto: data.nombreCompleto,
-          correo: data.correo,
+          correo: safeEmail,
           contrasena: data.contrasena,
           auth_uid: authUidGenerado
         }
@@ -109,8 +118,18 @@ export class EmpresaService {
   // Eliminar por Correo
   async deleteEmpresa(email) {
     try {
+      const safeEmail = email ? email.trim().toLowerCase() : '';
+
       // 1. Primero obtenemos la empresa por correo para tener su ID y su auth_uid
-      const empresa = await prisma.empresa.findUnique({ where: { correo: email } });
+      // Cambiamos a findFirst con insensitive mode por si acaso nos llega un correo en mayúsculas
+      const empresa = await prisma.empresa.findFirst({ 
+        where: { 
+          correo: {
+            equals: safeEmail,
+            mode: 'insensitive'
+          }
+        } 
+      });
 
       if (!empresa) {
         return { code: 404, message: "Empresa no encontrada con ese correo." };
