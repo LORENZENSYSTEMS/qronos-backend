@@ -1,4 +1,4 @@
-import { prisma } from "../../plugins/database.js";
+import prisma from "../../plugins/database.js";
 
 export class LandingPageService {
     async getMetricasLandingPage() {

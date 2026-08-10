@@ -1,4 +1,4 @@
-import { prisma } from "../../plugins/database.js";
+import prisma from "../../plugins/database.js";
 import { firebaseAdminAuth } from "../../plugins/firebaseAdmin.js"; // 👈 Importa tu configuración Admin
 
 export class EmpresaService {

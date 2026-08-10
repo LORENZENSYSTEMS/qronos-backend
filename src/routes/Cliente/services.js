@@ -1,4 +1,4 @@
-import {prisma} from '../../plugins/database.js';
+import prisma from '../../plugins/database.js';
 import {hashPassword} from '../../plugins/bcrypt.js'; 
 
 export class ClienteService {
@@ -41,6 +41,8 @@ export class ClienteService {
     }
 
     // --- LÓGICA DE ACTUALIZACIÓN DE PUSH TOKEN ---
+    console.log(pushToken)
+
     if (pushToken) {
         try {
             const updates = [];

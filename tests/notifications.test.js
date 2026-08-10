@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
-import notificationRoutes from '../src/routes/notifications/notifications.js';
+import notificationRoutes from '../src/routes/Notificaciones/notificaciones.js';
 
 // Mock de Expo SDK
 vi.mock('expo-server-sdk', () => {

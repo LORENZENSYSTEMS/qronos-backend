@@ -2,16 +2,69 @@ import 'dotenv/config';
 import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt'
 import cors from '@fastify/cors';
-import multipart from '@fastify/multipart'; // 👈 IMPORTANTE: Nueva librería
+import multipart from '@fastify/multipart';
 import clienteRoutes from './src/routes/Cliente/cliente.js';
 import EmpresaRouter from './src/routes/Empresa/empresa.js';
-import metricaRoutes from './src/routes/metricasCliente/metrica.js';
+import metricaRoutes from './src/routes/MetricasCliente/metrica.js';
 import qrRoutes from './src/routes/Qr/qr.router.js';
-import notificationRoutes from './src/routes/notifications/notifications.js';
 import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
 import productoRoutes from './src/routes/Producto/producto.js';
+import paisesModule from './src/routes/Paises/index.js';
+import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
 
-const app = Fastify({ logger: true });
+// Configuración del logger según entorno
+const environment = process.env.NODE_ENV || 'development';
+
+const envToLogger = {
+  development: {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        translateTime: 'HH:MM:ss Z',
+        ignore: 'pid,hostname',
+        colorize: true,
+        singleLine: false, // Para mejor legibilidad en desarrollo
+        levelFirst: true,  // Muestra el nivel primero (INFO, ERROR, etc)
+        messageFormat: '{msg}',
+      }
+    },
+    // Redactar datos sensibles automáticamente
+    redact: {
+      paths: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.body.password',
+        'req.body.token',
+        'req.body.refreshToken',
+        'req.query.token'
+      ],
+      censor: '***'
+    },
+    level: process.env.LOG_LEVEL || 'info', // Puedes usar 'debug' para más detalles
+  },
+  production: {
+    // En producción logs JSON puro para herramientas como Datadog, ELK, etc.
+    level: process.env.LOG_LEVEL || 'info',
+    redact: {
+      paths: [
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'req.body.password',
+        'req.body.token',
+        'req.body.refreshToken'
+      ],
+      censor: '***'
+    }
+  },
+  test: {
+    level: 'silent' // Silencia logs durante tests
+  }
+};
+
+// Crear la instancia de Fastify con el logger configurado
+const app = Fastify({
+  logger: envToLogger[environment] || envToLogger.development,
+});
 
 // Configuración de CORS
 await app.register(cors, {
@@ -36,6 +89,7 @@ await app.register(multipart, {
 });
 
 app.register(fastifyJwt, { secret: process.env.TOKEN });
+
 app.decorate("authenticate", async (request, reply) => {
   try {
     await request.jwtVerify();
@@ -44,7 +98,41 @@ app.decorate("authenticate", async (request, reply) => {
   }
 });
 
-app.get('/', async (request, reply) => { return { status: "running", uptime: process.uptime() } });
+// Agregar un middleware para loggear todas las peticiones automáticamente
+app.addHook('onRequest', async (request) => {
+  request.log.info({
+    method: request.method,
+    url: request.url,
+    ip: request.ip
+  }, 'Incoming request');
+});
+
+// Log de respuestas completadas
+app.addHook('onResponse', async (request, reply) => {
+  request.log.info({
+    method: request.method,
+    url: request.url,
+    statusCode: reply.statusCode,
+    responseTime: reply.elapsedTime
+  }, 'Request completed');
+});
+
+// Log de errores
+app.addHook('onError', async (request, reply, error) => {
+  request.log.error({
+    method: request.method,
+    url: request.url,
+    error: error.message,
+    stack: error.stack
+  }, 'Request error');
+});
+
+app.get('/', async (request, reply) => {
+  request.log.info('Root endpoint accessed');
+  return { status: "running", uptime: process.uptime() };
+});
+
+app.register(paisesModule);
 app.register(notificationRoutes, { prefix: '/api/notifications' });
 app.register(clienteRoutes, { prefix: '/api/cliente' });
 app.register(EmpresaRouter, { prefix: '/api/empresa' });
@@ -56,7 +144,11 @@ app.register(productoRoutes, { prefix: '/api' });
 const start = async () => {
   try {
     await app.listen({ port: 3000, host: "0.0.0.0" });
-    console.log("Servidor corriendo en http://0.0.0.0:3000");
+    
+    // Usar el logger de Fastify en lugar de console.log
+    app.log.info(`Servidor corriendo en http://0.0.0.0:3000`);
+    app.log.info(`Entorno: ${environment}`);
+    app.log.info(`Nivel de logs: ${app.log.level}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

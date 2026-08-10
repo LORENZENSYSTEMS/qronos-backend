@@ -1,4 +1,4 @@
-import { prisma } from "../../plugins/database.js";
+import prisma  from "../../plugins/database.js";
 import crypto from 'crypto';
 
 // --- CONFIGURACIÓN DE SEGURIDAD ---

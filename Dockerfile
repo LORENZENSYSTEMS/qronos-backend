@@ -3,11 +3,11 @@ RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 
 # Copiamos archivos de configuración
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY prisma ./prisma/
 
 # Instalamos y generamos Prisma
-RUN npm install
+RUN corepack enable && pnpm install --frozen-lockfile
 RUN npx prisma generate
 
 # Copiamos todo el resto (incluyendo tu main.js y la carpeta src)

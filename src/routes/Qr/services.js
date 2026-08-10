@@ -1,5 +1,5 @@
 // qr/qr.service.js 
-import { prisma } from "../../plugins/database.js";
+import  prisma  from "../../plugins/database.js";
 import crypto from 'crypto'; 
 
 const QR_SECRET_KEY = process.env.TOKEN; 
