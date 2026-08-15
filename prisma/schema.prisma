@@ -70,6 +70,8 @@ model Empresa {
   pais             String?
   ubicacionMaps    String?
   whatsapp         String?
+  horarioApertura  String?        
+  horarioCierre    String?        
   activo           Boolean        @default(true)
   categoria_id     Int?
   ciudad_id        Int?
@@ -84,6 +86,7 @@ model Empresa {
   metricas         Metrica[]
   notificaciones   Notificacion[]
   productos        Producto[]
+  mesas            Mesa[]
 }
 
 model Producto {
@@ -94,6 +97,33 @@ model Producto {
   descripcion String?
   empresa_id  Int
   empresa     Empresa @relation(fields: [empresa_id], references: [empresa_id])
+}
+
+model Mesa {
+  mesa_id     Int            @id @default(autoincrement())
+  nombre      String         
+  capacidad   Int            @default(4)
+  activo      Boolean        @default(true)
+  empresa_id  Int
+  empresa     Empresa        @relation(fields: [empresa_id], references: [empresa_id], onDelete: Cascade)
+  reservas    ReservaMesa[]
+
+  @@index([empresa_id])
+}
+
+model ReservaMesa {
+  reserva_id    Int      @id @default(autoincrement())
+  mesa_id       Int
+  mesa          Mesa     @relation(fields: [mesa_id], references: [mesa_id], onDelete: Cascade)
+  fecha         String   
+  hora          String   
+  personas      Int
+  clienteNombre String?
+  estado        String   @default("pendiente") 
+  created_at    DateTime @default(now())
+
+  @@index([mesa_id])
+  @@index([fecha, hora])
 }
 
 model Metrica {

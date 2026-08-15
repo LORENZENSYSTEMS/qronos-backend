@@ -53,7 +53,7 @@ export default async function empresaRoutes(fastify) {
     const allowedFields = [
       'nombreCompleto', 'correo', 'contrasena', 'pushToken',
       'fotoPerfil', 'fotoDescripcion1', 'fotoDescripcion2', 'fotoDescripcion3',
-      'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 'categoria'
+      'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 'categoria', 'horarioApertura', 'horarioCierre'
     ];
 
     try {
