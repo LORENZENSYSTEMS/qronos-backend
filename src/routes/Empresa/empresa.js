@@ -55,7 +55,7 @@ export default async function empresaRoutes(fastify) {
       'fotoPerfil', 'fotoDescripcion1', 'fotoDescripcion2', 'fotoDescripcion3',
       'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 
       'categoria', 'horarioApertura', 'horarioCierre', 
-      'mostrar_reservas', 'tipo_reservas' // 👈 AÑADIDOS AQUÍ
+      'mostrar_reservas', 'tipo_reservas', 'instagram', 'sitioWeb' // 👈 AÑADIDOS AQUÍ
     ];
 
     try {

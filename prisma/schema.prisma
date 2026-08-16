@@ -79,6 +79,8 @@ model Empresa {
   pais             String?
   ubicacionMaps    String?
   whatsapp         String?
+  instagram        String?        // 👈 NUEVO CAMPO
+  sitioWeb         String?        // 👈 NUEVO CAMPO
   lat              Float?
   lng              Float?
   horarioApertura  String?        
