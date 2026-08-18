@@ -12,7 +12,7 @@ import productoRoutes from './src/routes/Producto/producto.js';
 import paisesModule from './src/routes/Paises/index.js';
 import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
 import mesaRoutes from './src/routes/mesa/mesa.js';
-// import canchaRoutes from './src/routes/cancha/cancha.js';
+import canchaRoutes from './src/routes/cancha/cancha.js';
 
 // Configuración del logger según entorno
 const environment = process.env.NODE_ENV || 'development';
@@ -139,7 +139,7 @@ app.register(qrRoutes, { prefix: '/api/qr' });
 app.register(landingRoutes, { prefix: '/api/landing' });
 app.register(productoRoutes, { prefix: '/api' });
 app.register(mesaRoutes, { prefix: '/api/mesas' });
-// app.register(canchaRoutes, { prefix: '/api/canchas' });
+app.register(canchaRoutes, { prefix: '/api/canchas' });
 
 const start = async () => {
   try {

@@ -146,7 +146,7 @@ export class MesaService {
   // --- ACTUALIZAR RESERVA ---
   async updateReserva(reserva_id, data) {
     try {
-      // Si se está cambiando de mesa, fecha u hora, validamos que no esté ocupada
+      
       if (data.mesa_id || data.fecha || data.hora) {
         const reservaActual = await prisma.reservaMesa.findUnique({
           where: { reserva_id: Number(reserva_id) }

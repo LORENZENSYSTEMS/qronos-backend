@@ -87,6 +87,7 @@ model Empresa {
   notificaciones   Notificacion[]
   productos        Producto[]
   mesas            Mesa[]
+  canchas          Cancha[]
 }
 
 model Producto {
@@ -124,6 +125,34 @@ model ReservaMesa {
 
   @@index([mesa_id])
   @@index([fecha, hora])
+}
+
+model Cancha {
+  cancha_id     Int             @id @default(autoincrement())
+  nombre        String         
+  tipo          String          @default("General")
+  activo        Boolean         @default(true)
+  empresa_id    Int
+  empresa       Empresa         @relation(fields: [empresa_id], references: [empresa_id], onDelete: Cascade)
+  reservas      ReservaCancha[]
+
+  @@index([empresa_id])
+}
+
+model ReservaCancha {
+  reserva_id    Int      @id @default(autoincrement())
+  cancha_id     Int
+  cancha        Cancha   @relation(fields: [cancha_id], references: [cancha_id], onDelete: Cascade)
+  fecha         String   
+  hora_inicio   String   
+  hora_fin      String   
+  personas      Int
+  clienteNombre String?
+  estado        String   @default("pendiente") 
+  created_at    DateTime @default(now())
+
+  @@index([cancha_id])
+  @@index([fecha, hora_inicio, hora_fin])
 }
 
 model Metrica {
