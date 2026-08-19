@@ -70,6 +70,8 @@ model Empresa {
   pais             String?
   ubicacionMaps    String?
   whatsapp         String?
+  lat              Float?
+  lng              Float?
   activo           Boolean        @default(true)
   categoria_id     Int?
   ciudad_id        Int?

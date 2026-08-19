@@ -81,7 +81,12 @@ export class EmpresaService {
   // Obtener todas (Sin cambios)
   async getAllEmpresas() {
     try {
-      const empresas = await prisma.empresa.findMany();
+      const empresas = await prisma.empresa.findMany({
+        orderBy: [
+          { destacada: 'desc' },
+          { created_at: 'desc' }
+        ]
+      });
       return { code: 200, empresas: empresas };
     } catch (err) {
       return { code: 500, message: "Error al obtener las empresas", error: err.message };
@@ -112,6 +117,20 @@ export class EmpresaService {
     } catch (err) {
       if (err.code === 'P2025') return { code: 404, message: "Empresa no encontrada", error: err.message };
       return { code: 500, message: "Error al actualizar", error: err.message };
+    }
+  }
+
+  // Actualizar ubicación (lat/lng)
+  async updateUbicacion(id, lat, lng) {
+    try {
+      const empresaActualizada = await prisma.empresa.update({
+        where: { empresa_id: Number(id) },
+        data: { lat, lng }
+      });
+      return { code: 200, message: "Ubicación actualizada", empresa: empresaActualizada };
+    } catch (err) {
+      if (err.code === 'P2025') return { code: 404, message: "Empresa no encontrada", error: err.message };
+      return { code: 500, message: "Error al actualizar la ubicación", error: err.message };
     }
   }
 

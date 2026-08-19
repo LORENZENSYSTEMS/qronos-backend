@@ -53,6 +53,15 @@ export default async function clienteRoutes(fastify) {
         });
     });
 
+    // Obtener clientes con token de notificación
+    fastify.get('/with-token', async (request,reply) => {
+        await clienteService.getClientesWithToken().then(res=>{
+            reply.code(res.code).send({clientes:res.clientes});
+        }).catch(err=>{
+            reply.code(500).send({message:"Error al obtener los clientes con token", error: err.message});
+        });
+    });
+
     // Obtener 1 por ID
     fastify.get('/:id', async (request,reply) => {
         await clienteService.getClienteById(Number(request.params.id)).then(res=>{

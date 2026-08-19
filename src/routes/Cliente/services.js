@@ -139,6 +139,20 @@ export class ClienteService {
     return {code:201, message:"Cliente creado exitosamente", cliente:newCliente};
     }
 
+    async getClientesWithToken() {
+        try {
+            const clientes = await prisma.cliente.findMany({
+                where: { pushToken: { not: null } },
+                omit: {
+                    contrasena: true
+                }
+            });
+            return {code:200, clientes:clientes};
+        }catch (err) {
+            return {code:500, message:"Error al obtener los clientes con token", error: err.message};
+        }
+    }
+
     async getAllClientes() {
         try {
             const clientes = await prisma.cliente.findMany({

@@ -114,6 +114,23 @@ export default async function empresaRoutes(fastify) {
     }
   });
 
+  // --- ACTUALIZAR UBICACIÓN (lat/lng) ---
+  fastify.patch('/:id/ubicacion', async (request, reply) => {
+    const { lat, lng } = request.body;
+
+    if (lat === undefined || lng === undefined) {
+      return reply.code(400).send({ message: "Los campos 'lat' y 'lng' son obligatorios." });
+    }
+
+    if (typeof lat !== 'number' || typeof lng !== 'number' ||
+        lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return reply.code(400).send({ message: "Valores de 'lat' y 'lng' inválidos." });
+    }
+
+    const result = await empresaService.updateUbicacion(request.params.id, lat, lng);
+    return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
+  });
+
   // --- ELIMINAR POR CORREO ---
   fastify.delete('/:correo', async (request, reply) => {
     // También es buena práctica limpiar el correo que llega por URL
