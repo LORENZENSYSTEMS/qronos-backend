@@ -11,6 +11,8 @@ import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
 import productoRoutes from './src/routes/Producto/producto.js';
 import paisesModule from './src/routes/Paises/index.js';
 import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
+import mesaRoutes from './src/routes/mesa/mesa.js';
+import canchaRoutes from './src/routes/cancha/cancha.js';
 
 // Configuración del logger según entorno
 const environment = process.env.NODE_ENV || 'development';
@@ -23,12 +25,11 @@ const envToLogger = {
         translateTime: 'HH:MM:ss Z',
         ignore: 'pid,hostname',
         colorize: true,
-        singleLine: false, // Para mejor legibilidad en desarrollo
-        levelFirst: true,  // Muestra el nivel primero (INFO, ERROR, etc)
+        singleLine: false,
+        levelFirst: true,
         messageFormat: '{msg}',
       }
     },
-    // Redactar datos sensibles automáticamente
     redact: {
       paths: [
         'req.headers.authorization',
@@ -40,10 +41,9 @@ const envToLogger = {
       ],
       censor: '***'
     },
-    level: process.env.LOG_LEVEL || 'info', // Puedes usar 'debug' para más detalles
+    level: process.env.LOG_LEVEL || 'info',
   },
   production: {
-    // En producción logs JSON puro para herramientas como Datadog, ELK, etc.
     level: process.env.LOG_LEVEL || 'info',
     redact: {
       paths: [
@@ -57,7 +57,7 @@ const envToLogger = {
     }
   },
   test: {
-    level: 'silent' // Silencia logs durante tests
+    level: 'silent'
   }
 };
 
@@ -69,8 +69,6 @@ const app = Fastify({
 // Configuración de CORS
 await app.register(cors, {
   origin: (origin, cb) => {
-    // Permitimos peticiones sin origen (como React Native, Postman o dispositivos móviles)
-    // y peticiones de dominios específicos (tu frontend de Astro)
     if (!origin || /localhost/.test(origin) || origin === 'https://qronos.co') {
       cb(null, true);
       return;
@@ -140,12 +138,13 @@ app.register(metricaRoutes, { prefix: '/api/metricas' });
 app.register(qrRoutes, { prefix: '/api/qr' });
 app.register(landingRoutes, { prefix: '/api/landing' });
 app.register(productoRoutes, { prefix: '/api' });
+app.register(mesaRoutes, { prefix: '/api/mesas' });
+app.register(canchaRoutes, { prefix: '/api/canchas' });
 
 const start = async () => {
   try {
     await app.listen({ port: 3000, host: "0.0.0.0" });
     
-    // Usar el logger de Fastify en lugar de console.log
     app.log.info(`Servidor corriendo en http://0.0.0.0:3000`);
     app.log.info(`Entorno: ${environment}`);
     app.log.info(`Nivel de logs: ${app.log.level}`);
