@@ -49,11 +49,13 @@ export default async function empresaRoutes(fastify) {
   fastify.put('/:id', async (request, reply) => {
     console.log("Headers recibidos:", request.headers['content-type']);
 
-    // Lista de campos permitidos en el modelo Empresa (Incluyendo 'whatsapp')
+    // Lista de campos permitidos en el modelo Empresa (NUEVOS CAMPOS AÑADIDOS)
     const allowedFields = [
       'nombreCompleto', 'correo', 'contrasena', 'pushToken',
       'fotoPerfil', 'fotoDescripcion1', 'fotoDescripcion2', 'fotoDescripcion3',
-      'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 'categoria', 'horarioApertura', 'horarioCierre'
+      'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 
+      'categoria', 'horarioApertura', 'horarioCierre', 
+      'mostrar_reservas', 'tipo_reservas' // 👈 AÑADIDOS AQUÍ
     ];
 
     try {
@@ -67,7 +69,6 @@ export default async function empresaRoutes(fastify) {
             const buffer = await part.toBuffer();
 
             if (buffer && buffer.length > 0) {
-              // Verificamos que el fieldname sea uno de los campos de imagen permitidos
               if (allowedFields.includes(part.fieldname)) {
                 const url = await uploadToS3(buffer, part.filename, part.mimetype);
                 dataToUpdate[part.fieldname] = url;
@@ -82,9 +83,16 @@ export default async function empresaRoutes(fastify) {
         } else {
           // --- ES UN CAMPO DE TEXTO ---
           if (allowedFields.includes(part.fieldname)) {
-            // No procesamos valores que vengan como 'null' o 'undefined' en string desde el FormData
             if (part.value !== 'undefined' && part.value !== 'null') {
-              dataToUpdate[part.fieldname] = part.value;
+              
+              // 👈 MANEJO ESPECIAL PARA EL BOOLEANO
+              if (part.fieldname === 'mostrar_reservas') {
+                // Convierte el string "true" o "false" a un tipo booleano real
+                dataToUpdate[part.fieldname] = part.value === 'true';
+              } else {
+                dataToUpdate[part.fieldname] = part.value;
+              }
+              
             }
           } else {
             console.warn(`Campo de texto ignorado (no en whitelist): ${part.fieldname}`);
@@ -133,7 +141,6 @@ export default async function empresaRoutes(fastify) {
 
   // --- ELIMINAR POR CORREO ---
   fastify.delete('/:correo', async (request, reply) => {
-    // También es buena práctica limpiar el correo que llega por URL
     const correoNormalizado = request.params.correo ? decodeURIComponent(request.params.correo).trim().toLowerCase() : '';
     const result = await empresaService.deleteEmpresa(correoNormalizado);
     return reply.code(result.code).send(result);

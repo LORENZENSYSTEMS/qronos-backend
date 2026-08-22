@@ -73,7 +73,9 @@ model Empresa {
   lat              Float?
   lng              Float?
   horarioApertura  String?        
-  horarioCierre    String?        
+  horarioCierre    String?
+  mostrar_reservas Boolean        @default(true)      // 👈 NUEVO: Define si acepta reservas
+  tipo_reservas    String         @default("Mesas")   // 👈 NUEVO: Tipo (Mesas, Canchas, Ambas)
   activo           Boolean        @default(true)
   categoria_id     Int?
   ciudad_id        Int?
