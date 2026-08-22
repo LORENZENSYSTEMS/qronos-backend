@@ -52,6 +52,15 @@ model Categoria {
   empresas     Empresa[]
 }
 
+model CategoriaProducto {
+  categoria_prod_id Int       @id @default(autoincrement())
+  nombre            String    @unique
+  activo            Boolean   @default(true)
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+  productos         Producto[]
+}
+
 model Empresa {
   empresa_id       Int            @id @unique @default(autoincrement())
   nombreCompleto   String
@@ -74,8 +83,8 @@ model Empresa {
   lng              Float?
   horarioApertura  String?        
   horarioCierre    String?
-  mostrar_reservas Boolean        @default(true)      // 👈 NUEVO: Define si acepta reservas
-  tipo_reservas    String         @default("Mesas")   // 👈 NUEVO: Tipo (Mesas, Canchas, Ambas)
+  mostrar_reservas Boolean        @default(true)      
+  tipo_reservas    String         @default("Mesas")   
   activo           Boolean        @default(true)
   categoria_id     Int?
   ciudad_id        Int?
@@ -95,13 +104,15 @@ model Empresa {
 }
 
 model Producto {
-  producto_id Int     @id @default(autoincrement())
-  nombre      String
-  precio      Float
-  imagenUrl   String
-  descripcion String?
-  empresa_id  Int
-  empresa     Empresa @relation(fields: [empresa_id], references: [empresa_id])
+  producto_id       Int                 @id @default(autoincrement())
+  nombre            String
+  precio            Float
+  imagenUrl         String
+  descripcion       String?
+  empresa_id        Int
+  categoria_prod_id Int?                
+  empresa           Empresa             @relation(fields: [empresa_id], references: [empresa_id])
+  categoria_rel     CategoriaProducto?  @relation(fields: [categoria_prod_id], references: [categoria_prod_id])
 }
 
 model Mesa {

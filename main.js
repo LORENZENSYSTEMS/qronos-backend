@@ -13,6 +13,8 @@ import paisesModule from './src/routes/Paises/index.js';
 import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
 import mesaRoutes from './src/routes/mesa/mesa.js';
 import canchaRoutes from './src/routes/cancha/cancha.js';
+// 👇 NUEVO: Importamos las rutas de categorías de productos
+import categoriaProductoRoutes from './src/routes/categoriaProducto/categoriaProducto.js'; 
 
 // Configuración del logger según entorno
 const environment = process.env.NODE_ENV || 'development';
@@ -140,6 +142,8 @@ app.register(landingRoutes, { prefix: '/api/landing' });
 app.register(productoRoutes, { prefix: '/api' });
 app.register(mesaRoutes, { prefix: '/api/mesas' });
 app.register(canchaRoutes, { prefix: '/api/canchas' });
+// 👇 NUEVO: Registramos la ruta en Fastify
+app.register(categoriaProductoRoutes, { prefix: '/api' }); 
 
 const start = async () => {
   try {
