@@ -39,3 +39,5 @@ export async function sendVerificationEmail(recipientEmail, token, type) {
     await transporter.sendMail(mailOptions);
     console.log("Correo de verificación enviado exitosamente.");
 }
+
+//Para que sirve esto?

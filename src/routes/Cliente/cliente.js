@@ -1,83 +1,112 @@
 // archivo: cliente.js
+import { normalizeEmail } from '../../utils/validate.js';
+import {
+  ClienteService,
+  SesionService,
+  AuthService,
+  PushTokenService,
+  JwtService,
+  PasswordService,
+  AppError,
+} from './Services/services.js';
+import { ClienteRepository } from './Repositories/ClienteRepository.js';
+import { EmpresaRepository } from './Repositories/EmpresaRepository.js';
 
-import {ClienteService} from './services.js';
+function enviarError(reply, err) {
+  if (err instanceof AppError) {
+    return reply.code(err.status).send({ message: err.message });
+  }
+  console.error(err);
+  return reply.code(500).send({ message: 'Error interno del servidor', error: err.message });
+}
 
 export default async function clienteRoutes(fastify) {
-    const clienteService = new ClienteService(fastify);
+  const passwordService = new PasswordService();
+  const jwtService = new JwtService(fastify.jwt);
+  const clienteRepository = new ClienteRepository();
+  const empresaRepository = new EmpresaRepository();
+  const authService = new AuthService(clienteRepository, empresaRepository);
+  const pushTokenService = new PushTokenService(clienteRepository, empresaRepository);
+  const sesionService = new SesionService({ authService, pushTokenService, jwtService });
+  const clienteService = new ClienteService({
+    repository: clienteRepository,
+    empresaRepository,
+    passwordService,
+  });
 
-    // Inicio de sesion 
-   fastify.post('/login', async (request, reply) => {
-    // Recibimos pushToken desde el body que enviamos en el frontend
-    const { email, pushToken } = request.body; 
-    
-    // Normalizamos el correo eliminando espacios y forzando minúsculas
-    const emailNormalizado = email ? email.trim().toLowerCase() : '';
-    
-    // Pasamos el correo normalizado al service
-    const res = await clienteService.login(emailNormalizado, pushToken); 
-    
-    if (res.code >= 400) {
-        reply.code(res.code).send({ message: res.message });
-    } else {
-        reply.code(res.code).send({
-                message: res.message, 
-                token: res.token, 
-                cliente: res.cliente, 
-                code: res.code,
-                empresa: res.empresa, 
-                token_empresa: res.token_empresa,
-                jwt: res.jwt, 
-                rol: res.rol, 
-            });
-        }
-    });
+  // Inicio de sesion
+  fastify.post('/login', async (request, reply) => {
+    try {
+      // Recibimos pushToken desde el body que enviamos en el frontend
+      const { email, pushToken } = request.body;
 
-    // Crear cliente
-    fastify.post('/', async (request, reply) => {
-        const data = request.body;
-        const res = await clienteService.createCliente(data);
+      // Normalizamos el correo eliminando espacios y forzando minúsculas
+      const emailNormalizado = normalizeEmail(email);
 
-        if (res.code >= 400) {
-            reply.code(res.code).send({ message: res.message, error: res.internalError });
-        } else {
-            reply.code(res.code).send({ message: res.message, cliente: res.cliente });
-        }
-    });
+      const res = await sesionService.login(emailNormalizado, pushToken);
 
-    // Obtener todos
-    fastify.get('/', async (resquest,reply) => {
-        await clienteService.getAllClientes().then(res=>{
-            reply.code(res.code).send({clientes:res.clientes});
-        }).catch(err=>{
-            reply.code(500).send({message:"Error al obtener los clientes", error: err.message});
-        });
-    });
+      return reply.code(200).send({
+        message: 'Inicio de sesión exitoso',
+        token: res.token,
+        cliente: res.cliente,
+        code: 200,
+        empresa: res.empresa,
+        token_empresa: res.token_empresa,
+        jwt: res.jwt,
+        rol: res.rol,
+      });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
+  });
 
-    // Obtener 1 por ID
-    fastify.get('/:id', async (request,reply) => {
-        await clienteService.getClienteById(Number(request.params.id)).then(res=>{
-            reply.code(res.code).send({cliente:res.data,});
-        }).catch(err=>{
-            reply.code(500).send({message:"Error al obtener el cliente", error: err.message});
-        }); 
-    });
+  // Crear cliente
+  fastify.post('/', async (request, reply) => {
+    try {
+      const res = await clienteService.createCliente(request.body);
+      return reply.code(201).send({ message: res.message, cliente: res.cliente });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
+  });
 
-    // Actualizar
-    fastify.put('/:id', async (request,reply) => {
-        const data = request.body;
-        await clienteService.updateCliente(Number(request.params.id), data).then(res=>{
-            reply.code(res.code).send({message:res.message, cliente:res.cliente});
-        }).catch(err=>{
-            reply.code(401).send({message:"Error al actualizar el cliente", error: err.message});
-        });
-    });
+  // Obtener todos
+  fastify.get('/', async (request, reply) => {
+    try {
+      const res = await clienteService.getAllClientes();
+      return reply.code(200).send({ clientes: res.clientes });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
+  });
 
-    // Eliminar
-    fastify.delete('/:id', async (request,reply) => {
-        await clienteService.deleteCliente(Number(request.params.id)).then(res=>{
-            reply.code(res.code).send({message:res.message});
-        }).catch(err=>{
-            reply.code(401).send({message:"Error al eliminar el cliente", error: err.message});
-        });
-    });
+  // Obtener 1 por ID
+  fastify.get('/:id', async (request, reply) => {
+    try {
+      const res = await clienteService.getClienteById(Number(request.params.id));
+      return reply.code(200).send({ cliente: res.data });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
+  });
+
+  // Actualizar
+  fastify.put('/:id', async (request, reply) => {
+    try {
+      const res = await clienteService.updateCliente(Number(request.params.id), request.body);
+      return reply.code(200).send({ message: res.message, cliente: res.cliente });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
+  });
+
+  // Eliminar
+  fastify.delete('/:id', async (request, reply) => {
+    try {
+      const res = await clienteService.deleteCliente(Number(request.params.id));
+      return reply.code(200).send({ message: res.message });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
+  });
 }
