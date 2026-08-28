@@ -3,8 +3,8 @@ import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt'
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
-import clienteRoutes from './src/routes/Cliente/cliente.js';
-import EmpresaRouter from './src/routes/Empresa/empresa.js';
+import clienteController from './src/routes/Cliente/ClienteController.js';
+import EmpresaController from './src/routes/Empresa/EmpresaController.js';
 import metricaRoutes from './src/routes/MetricasCliente/metrica.js';
 import qrRoutes from './src/routes/Qr/qr.router.js';
 import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
@@ -134,8 +134,8 @@ app.get('/', async (request, reply) => {
 
 app.register(paisesModule);
 app.register(notificationRoutes, { prefix: '/api/notifications' });
-app.register(clienteRoutes, { prefix: '/api/cliente' });
-app.register(EmpresaRouter, { prefix: '/api/empresa' });
+app.register(clienteController, { prefix: '/api/cliente' });
+app.register(EmpresaController, { prefix: '/api/empresa' });
 app.register(metricaRoutes, { prefix: '/api/metricas' });
 app.register(qrRoutes, { prefix: '/api/qr' });
 app.register(landingRoutes, { prefix: '/api/landing' });

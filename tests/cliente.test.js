@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
 import fastifyJwt from '@fastify/jwt';
-import clienteRoutes from '../src/routes/Cliente/cliente.js';
+import clienteController from '../src/routes/Cliente/ClienteController.js';
 import { prisma } from '../src/plugins/database.js';
 
 // Mock del cliente Prisma
@@ -36,7 +36,7 @@ describe('Suite de Pruebas: Clientes', () => {
     vi.clearAllMocks();
     app = Fastify();
     await app.register(fastifyJwt, { secret: 'test-secret' });
-    await app.register(clienteRoutes);
+    await app.register(clienteController);
     await app.ready();
   });
 

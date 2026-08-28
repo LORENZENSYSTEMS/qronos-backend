@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
-import empresaRoutes from '../src/routes/Empresa/empresa.js';
+import empresaController from '../src/routes/Empresa/EmpresaController.js';
 import { prisma } from '../src/plugins/database.js';
 
 // Mock de Firebase Admin
@@ -44,7 +44,7 @@ describe('Suite de Pruebas: Empresas', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     app = Fastify();
-    await app.register(empresaRoutes);
+    await app.register(empresaController);
     await app.ready();
   });
 
