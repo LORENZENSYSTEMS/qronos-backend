@@ -30,6 +30,11 @@ export class ClienteService {
     return { clientes };
   }
 
+  async getClientesWithToken() {
+    const clientes = await this.repository.findWithToken();
+    return { clientes };
+  }
+
   async getClienteById(id) {
     const cliente = await this.repository.findById(id);
     if (!cliente) {

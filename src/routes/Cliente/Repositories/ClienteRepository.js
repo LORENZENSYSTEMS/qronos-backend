@@ -68,6 +68,15 @@ export class ClienteRepository {
     }
   }
 
+  async findWithToken() {
+    return prisma.cliente.findMany({
+      where: { pushToken: { not: null } },
+      omit: {
+        contrasena: true,
+      },
+    });
+  }
+
   async findPushTokens() {
     const clientes = await prisma.cliente.findMany({
       where: { pushToken: { not: null } },

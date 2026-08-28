@@ -126,4 +126,38 @@ describe('Suite de Pruebas: Clientes', () => {
       expect(response.statusCode).toBe(404);
     });
   });
+
+  describe('GET /with-token', () => {
+    it('debe retornar 200 y lista de clientes con push token', async () => {
+      // Arrange
+      prisma.cliente.findMany.mockResolvedValue([
+        { cliente_id: 1, nombreCompleto: 'Cliente 1', pushToken: 'token-1' },
+      ]);
+
+      // Act
+      const response = await app.inject({
+        method: 'GET',
+        url: '/with-token',
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.body).clientes).toHaveLength(1);
+    });
+
+    it('debe retornar 200 con lista vacía si no hay clientes con token', async () => {
+      // Arrange
+      prisma.cliente.findMany.mockResolvedValue([]);
+
+      // Act
+      const response = await app.inject({
+        method: 'GET',
+        url: '/with-token',
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.body).clientes).toEqual([]);
+    });
+  });
 });
