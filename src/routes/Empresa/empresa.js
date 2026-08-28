@@ -1,123 +1,100 @@
-import { EmpresaService } from "./services.js";
-// Asegúrate de que esta ruta sea correcta según tu estructura de carpetas
-import { uploadToS3 } from "../../utils/s3Config.js";
+import { normalizeEmail } from '../../utils/validate.js';
+import {
+  EmpresaService,
+  EmpresaUpdateService,
+  FirebaseService,
+  AppError,
+} from './Services/services.js';
+import { EmpresaRepository } from './Repositories/EmpresaRepository.js';
+
+function enviarError(reply, err) {
+  if (err instanceof AppError) {
+    return reply.code(err.status).send({ message: err.message });
+  }
+  console.error(err);
+  return reply.code(500).send({ message: 'Error interno del servidor', error: err.message });
+}
 
 export default async function empresaRoutes(fastify) {
-  const empresaService = new EmpresaService(fastify);
+  const empresaRepository = new EmpresaRepository();
+  const firebaseService = new FirebaseService();
+  const empresaService = new EmpresaService({
+    repository: empresaRepository,
+    firebaseService,
+  });
+  const empresaUpdateService = new EmpresaUpdateService();
 
   // --- LOGIN ---
   fastify.post('/login', async (request, reply) => {
-    const { email } = request.body;
-    
-    // Normalizamos el correo eliminando espacios y forzando minúsculas
-    const emailNormalizado = email ? email.trim().toLowerCase() : '';
-    
-    const res = await empresaService.login(emailNormalizado);
+    try {
+      const res = await empresaService.login(request.body?.email);
 
-    if (res.code >= 400) {
-      return reply.code(res.code).send({ message: res.message });
+      return reply.code(200).send({
+        message: res.message,
+        code: 200,
+        empresa: res.empresa,
+        token_empresa: res.token_empresa,
+        auth_uid: res.auth_uid,
+      });
+    } catch (err) {
+      return enviarError(reply, err);
     }
-
-    return reply.code(res.code).send({
-      message: res.message,
-      code: res.code,
-      empresa: res.empresa,
-      token_empresa: res.token_empresa,
-      auth_uid: res.auth_uid
-    });
   });
 
   // --- CREAR EMPRESA ---
   fastify.post('/', async (request, reply) => {
-    const result = await empresaService.createEmpresa(request.body);
-    return reply.code(result.code).send(result.code === 201 ? result.empresa : result);
+    try {
+      const res = await empresaService.createEmpresa(request.body);
+      return reply.code(201).send({ message: res.message, empresa: res.empresa });
+    } catch (err) {
+      return enviarError(reply, err);
+    }
   });
 
   // --- OBTENER TODAS ---
   fastify.get('/', async (request, reply) => {
-    const result = await empresaService.getAllEmpresas();
-    return reply.code(result.code).send(result.code === 200 ? result.empresas : result);
+    try {
+      const empresas = await empresaService.getAllEmpresas();
+      return reply.code(200).send(empresas);
+    } catch (err) {
+      return enviarError(reply, err);
+    }
   });
 
   // --- OBTENER POR ID ---
   fastify.get('/:id', async (request, reply) => {
-    const result = await empresaService.getEmpresaById(request.params.id);
-    return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
+    try {
+      const empresa = await empresaService.getEmpresaById(request.params.id);
+      return reply.code(200).send(empresa);
+    } catch (err) {
+      return enviarError(reply, err);
+    }
   });
 
   // --- ACTUALIZAR (Lógica FormData para imágenes, texto y WhatsApp) ---
   fastify.put('/:id', async (request, reply) => {
-    console.log("Headers recibidos:", request.headers['content-type']);
-
-    // Lista de campos permitidos en el modelo Empresa (NUEVOS CAMPOS AÑADIDOS)
-    const allowedFields = [
-      'nombreCompleto', 'correo', 'contrasena', 'pushToken',
-      'fotoPerfil', 'fotoDescripcion1', 'fotoDescripcion2', 'fotoDescripcion3',
-      'ubicacionMaps', 'whatsapp', 'descuento', 'descripcion', 'pais', 'ciudad', 
-      'categoria', 'horarioApertura', 'horarioCierre', 
-      'mostrar_reservas', 'tipo_reservas', 'instagram', 'sitioWeb' // 👈 AÑADIDOS AQUÍ
-    ];
+    console.log('Headers recibidos:', request.headers['content-type']);
 
     try {
-      const dataToUpdate = {};
-      const parts = request.parts();
+      const dataToUpdate = await empresaUpdateService.parseAndUpload(request);
 
-      for await (const part of parts) {
-        if (part.file) {
-          // --- ES UN ARCHIVO (IMAGEN) ---
-          try {
-            const buffer = await part.toBuffer();
-
-            if (buffer && buffer.length > 0) {
-              if (allowedFields.includes(part.fieldname)) {
-                const url = await uploadToS3(buffer, part.filename, part.mimetype);
-                dataToUpdate[part.fieldname] = url;
-                console.log(`Imagen subida: ${part.fieldname} -> ${url}`);
-              } else {
-                console.warn(`Campo de archivo no permitido: ${part.fieldname}`);
-              }
-            }
-          } catch (err) {
-            console.error(`Error subiendo imagen ${part.fieldname}:`, err);
-          }
-        } else {
-          // --- ES UN CAMPO DE TEXTO ---
-          if (allowedFields.includes(part.fieldname)) {
-            if (part.value !== 'undefined' && part.value !== 'null') {
-              
-              // 👈 MANEJO ESPECIAL PARA EL BOOLEANO
-              if (part.fieldname === 'mostrar_reservas') {
-                // Convierte el string "true" o "false" a un tipo booleano real
-                dataToUpdate[part.fieldname] = part.value === 'true';
-              } else {
-                dataToUpdate[part.fieldname] = part.value;
-              }
-              
-            }
-          } else {
-            console.warn(`Campo de texto ignorado (no en whitelist): ${part.fieldname}`);
-          }
-        }
-      }
-
-      // Validación de datos
       if (Object.keys(dataToUpdate).length === 0) {
         return reply.code(400).send({
-          message: "No se enviaron datos válidos para actualizar.",
-          fields_sent: Object.keys(dataToUpdate)
+          message: 'No se enviaron datos válidos para actualizar.',
+          fields_sent: Object.keys(dataToUpdate),
         });
       }
 
-      // Llamamos al servicio para actualizar en Prisma
       const result = await empresaService.updateEmpresa(request.params.id, dataToUpdate);
-
-      return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
-
-    } catch (error) {
-      console.error("Error crítico procesando multipart:", error);
+      return reply.code(200).send(result);
+    } catch (err) {
+      if (err instanceof AppError) {
+        return enviarError(reply, err);
+      }
+      console.error('Error crítico procesando multipart:', err);
       return reply.code(500).send({
-        message: "Error interno procesando la subida de datos.",
-        error: error.message
+        message: 'Error interno procesando la subida de datos.',
+        error: err.message,
       });
     }
   });
@@ -135,21 +112,35 @@ export default async function empresaRoutes(fastify) {
       return reply.code(400).send({ message: "Valores de 'lat' y 'lng' inválidos." });
     }
 
-    const result = await empresaService.updateUbicacion(request.params.id, lat, lng);
-    return reply.code(result.code).send(result.code === 200 ? result.empresa : result);
+    try {
+      const result = await empresaService.updateUbicacion(request.params.id, lat, lng);
+      return reply.code(200).send(result);
+    } catch (err) {
+      return enviarError(reply, err);
+    }
   });
 
   // --- ELIMINAR POR CORREO ---
   fastify.delete('/:correo', async (request, reply) => {
-    const correoNormalizado = request.params.correo ? decodeURIComponent(request.params.correo).trim().toLowerCase() : '';
-    const result = await empresaService.deleteEmpresa(correoNormalizado);
-    return reply.code(result.code).send(result);
+    const correoNormalizado = normalizeEmail(
+      request.params.correo ? decodeURIComponent(request.params.correo) : ''
+    );
+
+    try {
+      const result = await empresaService.deleteEmpresa(correoNormalizado);
+      return reply.code(200).send(result);
+    } catch (err) {
+      return enviarError(reply, err);
+    }
   });
 
   // --- VERIFICACIÓN MANUAL ---
   fastify.put('/verify/:auth_uid', async (request, reply) => {
-    const { auth_uid } = request.params;
-    const result = await empresaService.verifyEmpresaManually(auth_uid);
-    return reply.code(result.code).send(result);
+    try {
+      const result = await empresaService.verifyEmpresaManually(request.params.auth_uid);
+      return reply.code(200).send(result);
+    } catch (err) {
+      return enviarError(reply, err);
+    }
   });
 }

@@ -15,6 +15,7 @@ vi.mock('../src/plugins/firebaseAdmin.js', () => ({
 // Mock del cliente Prisma
 vi.mock('../src/plugins/database.js', () => ({
   prisma: {
+    $transaction: vi.fn(),
     empresa: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -22,6 +23,12 @@ vi.mock('../src/plugins/database.js', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+    },
+    producto: {
+      deleteMany: vi.fn(),
+    },
+    metrica: {
+      deleteMany: vi.fn(),
     },
   },
 }));
@@ -105,6 +112,25 @@ describe('Suite de Pruebas: Empresas', () => {
       // Assert
       expect(response.statusCode).toBe(200);
       expect(JSON.parse(response.body).empresa_id).toBe(1);
+    });
+  });
+
+  describe('POST /', () => {
+    it('debe crear una empresa y retornar 201', async () => {
+      // Arrange
+      prisma.empresa.findFirst.mockResolvedValue(null);
+      prisma.empresa.create.mockResolvedValue({ empresa_id: 1, nombreCompleto: 'Nueva', correo: 'nueva@test.com', auth_uid: 'mock-uid' });
+
+      // Act
+      const response = await app.inject({
+        method: 'POST',
+        url: '/',
+        payload: { nombreCompleto: 'Nueva', correo: 'nueva@test.com', contrasena: '123456' },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(201);
+      expect(prisma.empresa.create).toHaveBeenCalled();
     });
   });
 });
