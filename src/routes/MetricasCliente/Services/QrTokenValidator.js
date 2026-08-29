@@ -3,7 +3,7 @@ import {
   InvalidTokenError,
   UnauthorizedTokenError,
   ExpiredTokenError,
-} from './errors.js';
+} from '../../../utils/errors.js';
 
 const HASH_ALGORITHM = 'sha256';
 const EXPIRATION_MS = 300000;

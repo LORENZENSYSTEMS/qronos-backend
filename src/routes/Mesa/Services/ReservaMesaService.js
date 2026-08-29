@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from './errors.js';
+import { ConflictError, NotFoundError } from '../../../utils/errors.js';
 
 export class ReservaMesaService {
   constructor({ repository }) {

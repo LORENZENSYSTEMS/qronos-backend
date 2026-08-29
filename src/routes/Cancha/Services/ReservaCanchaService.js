@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from './errors.js';
+import { ConflictError, NotFoundError, ValidationError } from '../../../utils/errors.js';
 
 export class ReservaCanchaService {
   constructor({ repository, slotConflictChecker }) {
@@ -28,7 +28,7 @@ export class ReservaCanchaService {
     const horaFin = data.hora_fin;
 
     if (!horaInicio || !horaFin) {
-      throw new ConflictError('Se requiere hora de inicio y hora de fin para la reserva.');
+      throw new ValidationError('Se requiere hora de inicio y hora de fin para la reserva.');
     }
 
     const canchaId = Number(data.cancha_id);

@@ -157,7 +157,7 @@ describe('Suite de Pruebas: Canchas', () => {
       expect(body.reserva.cancha_id).toBe(1);
     });
 
-    it('debe retornar 400 si hay solapamiento de horarios', async () => {
+    it('debe retornar 409 si hay solapamiento de horarios', async () => {
       prisma.reservaCancha.findMany.mockResolvedValue([
         { cancha_id: 1, fecha: '2026-08-28', hora_inicio: '10:00', hora_fin: '12:00' },
       ]);
@@ -173,7 +173,7 @@ describe('Suite de Pruebas: Canchas', () => {
         },
       });
 
-      expect(response.statusCode).toBe(400);
+      expect(response.statusCode).toBe(409);
       expect(JSON.parse(response.body).message).toContain('reservada');
     });
 

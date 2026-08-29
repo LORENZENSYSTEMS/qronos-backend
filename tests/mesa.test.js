@@ -150,7 +150,7 @@ describe('Suite de Pruebas: Mesas', () => {
       expect(body.reserva.mesa_id).toBe(1);
     });
 
-    it('debe retornar 400 si la mesa ya está reservada', async () => {
+    it('debe retornar 409 si la mesa ya está reservada', async () => {
       prisma.reservaMesa.findFirst.mockResolvedValue({ reserva_id: 1, mesa_id: 1 });
 
       const response = await app.inject({
@@ -159,7 +159,7 @@ describe('Suite de Pruebas: Mesas', () => {
         payload: { mesa_id: 1, fecha: '2026-08-28', hora: '20:00' },
       });
 
-      expect(response.statusCode).toBe(400);
+      expect(response.statusCode).toBe(409);
       expect(JSON.parse(response.body).message).toContain('reservada');
     });
   });

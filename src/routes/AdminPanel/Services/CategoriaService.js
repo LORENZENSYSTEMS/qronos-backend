@@ -1,4 +1,4 @@
-import { ConflictError } from './errors.js';
+import { ConflictError } from '../../../utils/errors.js';
 
 export class CategoriaService {
   constructor({ repository }) {

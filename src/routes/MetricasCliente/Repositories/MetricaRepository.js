@@ -1,5 +1,5 @@
 import { prisma } from '../../../plugins/database.js';
-import { NotFoundError } from '../Services/errors.js';
+import { NotFoundError } from '../../../utils/errors.js';
 
 export class MetricaRepository {
   async upsertScan({ clienteId, empresaId, puntos }) {

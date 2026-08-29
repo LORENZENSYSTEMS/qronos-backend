@@ -1,5 +1,5 @@
 import { Expo } from 'expo-server-sdk';
-import { NotificationError } from './errors.js';
+import { NotificationError } from '../../../utils/errors.js';
 
 export class ExpoPushService {
   constructor() {

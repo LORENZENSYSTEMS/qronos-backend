@@ -1,4 +1,4 @@
-import { NotFoundError } from './errors.js';
+import { NotFoundError } from '../../../utils/errors.js';
 
 export class SesionService {
   constructor({ authService, pushTokenService, jwtService }) {

@@ -1,4 +1,4 @@
-import { NotFoundError } from './errors.js';
+import { NotFoundError } from '../../../utils/errors.js';
 
 const ULTIMOS_7_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
 

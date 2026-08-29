@@ -7,4 +7,4 @@ export {
   UnauthorizedTokenError,
   ExpiredTokenError,
   ValidationError,
-} from './errors.js';
+} from '../../../utils/errors.js';

@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from './errors.js';
+import { NotFoundError, ValidationError } from '../../../utils/errors.js';
 
 export class QrService {
   constructor({ qrTokenSigner, clienteRepository }) {

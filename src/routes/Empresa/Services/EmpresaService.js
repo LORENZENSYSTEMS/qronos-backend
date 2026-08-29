@@ -1,5 +1,5 @@
 import { normalizeEmail } from '../../../utils/validate.js';
-import { ConflictError, NotFoundError } from './errors.js';
+import { ConflictError, NotFoundError } from '../../../utils/errors.js';
 
 export class EmpresaService {
   constructor({ repository, firebaseService }) {

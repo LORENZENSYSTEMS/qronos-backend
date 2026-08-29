@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { ValidationError } from './errors.js';
+import { ValidationError } from '../../../utils/errors.js';
 
 const HASH_ALGORITHM = 'sha256';
 
