@@ -14,7 +14,7 @@ import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
 import mesaRoutes from './src/routes/Mesa/MesaController.js';
 import canchaRoutes from './src/routes/Cancha/CanchaController.js';
 // 👇 NUEVO: Importamos las rutas de categorías de productos
-import categoriaProductoRoutes from './src/routes/categoriaProducto/categoriaProducto.js'; 
+import categoriaProductoRoutes from './src/routes/CategoriaProducto/CategoriaProductoController.js'; 
 
 // Configuración del logger según entorno
 const environment = process.env.NODE_ENV || 'development';
