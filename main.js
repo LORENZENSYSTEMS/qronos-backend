@@ -11,8 +11,8 @@ import landingRoutes from './src/routes/MetricasLandingPage/landing.js';
 import productoRoutes from './src/routes/Producto/producto.js';
 import paisesModule from './src/routes/Paises/index.js';
 import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
-import mesaRoutes from './src/routes/mesa/mesa.js';
-import canchaRoutes from './src/routes/cancha/cancha.js';
+import mesaRoutes from './src/routes/Mesa/MesaController.js';
+import canchaRoutes from './src/routes/Cancha/CanchaController.js';
 // 👇 NUEVO: Importamos las rutas de categorías de productos
 import categoriaProductoRoutes from './src/routes/categoriaProducto/categoriaProducto.js'; 
 

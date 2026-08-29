@@ -93,8 +93,8 @@ export class EmpresaService {
     };
   }
 
-  async verifyEmpresaManually(auth_uid) {
-    await this.firebaseService.verifyUser(auth_uid);
+  async verifyEmpresaManually(authUid) {
+    await this.firebaseService.verifyUser(authUid);
     return { message: 'Usuario verificado manualmente en Firebase.' };
   }
 }
