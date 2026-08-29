@@ -6,11 +6,11 @@ import multipart from '@fastify/multipart';
 import clienteController from './src/routes/Cliente/ClienteController.js';
 import EmpresaController from './src/routes/Empresa/EmpresaController.js';
 import metricaRoutes from './src/routes/MetricasCliente/MetricaController.js';
-import qrRoutes from './src/routes/Qr/qr.router.js';
+import qrRoutes from './src/routes/Qr/QrController.js';
 import landingRoutes from './src/routes/MetricasLandingPage/LandingController.js';
-import productoRoutes from './src/routes/Producto/producto.js';
+import productoRoutes from './src/routes/Producto/ProductoController.js';
 import paisesModule from './src/routes/Paises/index.js';
-import notificationRoutes from './src/routes/Notificaciones/notificaciones.js';
+import notificationRoutes from './src/routes/Notificaciones/NotificacionController.js';
 import mesaRoutes from './src/routes/Mesa/MesaController.js';
 import canchaRoutes from './src/routes/Cancha/CanchaController.js';
 // 👇 NUEVO: Importamos las rutas de categorías de productos

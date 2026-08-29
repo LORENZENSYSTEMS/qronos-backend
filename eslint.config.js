@@ -6,6 +6,9 @@ const solidModules = [
   'src/routes/Mesa/**/*.js',
   'src/routes/Cliente/**/*.js',
   'src/routes/Empresa/**/*.js',
+  'src/routes/Notificaciones/**/*.js',
+  'src/routes/Producto/**/*.js',
+  'src/routes/Qr/**/*.js',
 ];
 
 export default [

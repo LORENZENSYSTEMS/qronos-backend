@@ -14,6 +14,18 @@ export class CategoriaProductoRepository {
     });
   }
 
+  async findByIds(categoriaIds) {
+    if (!categoriaIds || categoriaIds.length === 0) {
+      return [];
+    }
+
+    return prisma.categoriaProducto.findMany({
+      where: {
+        categoria_prod_id: { in: categoriaIds.map(Number) },
+      },
+    });
+  }
+
   async create(data) {
     return prisma.categoriaProducto.create({ data });
   }
