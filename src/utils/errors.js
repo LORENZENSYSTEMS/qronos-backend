@@ -24,3 +24,27 @@ export class ConflictError extends AppError {
     super(message, 409, 'CONFLICT');
   }
 }
+
+export class InvalidTokenError extends AppError {
+  constructor(message = 'Token inválido') {
+    super(message, 400, 'INVALID_TOKEN');
+  }
+}
+
+export class UnauthorizedTokenError extends AppError {
+  constructor(message = 'Token no autorizado') {
+    super(message, 401, 'UNAUTHORIZED_TOKEN');
+  }
+}
+
+export class ExpiredTokenError extends AppError {
+  constructor(message = 'El código QR ha expirado') {
+    super(message, 401, 'EXPIRED_TOKEN');
+  }
+}
+
+export class NotificationError extends AppError {
+  constructor(message = 'No se pudo enviar la notificación') {
+    super(message, 500, 'NOTIFICATION_ERROR');
+  }
+}
