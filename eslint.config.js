@@ -9,6 +9,7 @@ const solidModules = [
   'src/routes/Notificaciones/**/*.js',
   'src/routes/Producto/**/*.js',
   'src/routes/Qr/**/*.js',
+  'src/routes/AdminPanel/**/*.js',
 ];
 
 export default [

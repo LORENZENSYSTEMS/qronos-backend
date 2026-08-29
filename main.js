@@ -9,7 +9,7 @@ import metricaRoutes from './src/routes/MetricasCliente/MetricaController.js';
 import qrRoutes from './src/routes/Qr/QrController.js';
 import landingRoutes from './src/routes/MetricasLandingPage/LandingController.js';
 import productoRoutes from './src/routes/Producto/ProductoController.js';
-import paisesModule from './src/routes/Paises/index.js';
+import adminPanelModule from './src/routes/AdminPanel/index.js';
 import notificationRoutes from './src/routes/Notificaciones/NotificacionController.js';
 import mesaRoutes from './src/routes/Mesa/MesaController.js';
 import canchaRoutes from './src/routes/Cancha/CanchaController.js';
@@ -132,7 +132,7 @@ app.get('/', async (request, reply) => {
   return { status: "running", uptime: process.uptime() };
 });
 
-app.register(paisesModule);
+app.register(adminPanelModule);
 app.register(notificationRoutes, { prefix: '/api/notifications' });
 app.register(clienteController, { prefix: '/api/cliente' });
 app.register(EmpresaController, { prefix: '/api/empresa' });
