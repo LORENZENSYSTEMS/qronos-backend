@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
-import metricaRoutes from '../src/routes/metricasCliente/metrica.js';
-import landingRoutes from '../src/routes/metricasLandingPage/landing.js';
+import metricaRoutes from '../src/routes/metricasCliente/MetricaController.js';
+import landingRoutes from '../src/routes/metricasLandingPage/LandingController.js';
 import { prisma } from '../src/plugins/database.js';
 
 // Mock de Prisma
